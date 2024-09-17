@@ -1,50 +1,42 @@
-# hack.chat
+# 小张聊天室 全新版本  
 
-[hack.chat](https://hack.chat/) is a minimal, distraction-free, accountless, logless, disappearing chat service which is easily deployable as your own service. The current client comes bundled with LaTeX rendering provided by [KaTeX](https://github.com/Khan/KaTeX) and code syntax highlighting provided by [highlight.js](https://github.com/isagalaev/highlight.js).
+## ~~成品~~  
+尚未完工，敬请期待  
+~~https://nzhc.zhangsoft.link/~~  
 
-A list of software developed for the hack.chat framework can be found at the [3rd party software list](https://github.com/hack-chat/3rd-party-software-list) repository. This includes bots, clients, docker containers, etc.
+## 简介  
+**注意：此项目尚未完工，可能会出现各种不可预知的错误，请酌情使用**  
+这是一个黑客风格的匿名聊天室，基于开源项目 HackChat 的一个旧版本编写。  
+里面的所有功能都是以“命令”的形式存在。  
+对比旧版本的 ZhangChat，此版本会简洁一些。  
 
-This is a backwards compatible continuation of the [work by Andrew Belt](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features including new commands and hot-reload of the commands/protocol. There is also [documentation](documentation/DOCUMENTATION.md) and a [changelog](CHANGELOG.md).
+## 重要内容  
+### 关于许可证和开源的问题  
+我们的软件是开源的，但这并不代表您可以不遵守许可证要求而干任何事情。开源是一种精神，但许可证是底线，以开源的名义而不遵守许可证的不良开发者，是无法成大器的。这里引用ice（light）的一句话：“你应该尊重开发者！”  
+### 关于静默移动用户的问题  
+ZhangChat在开发之初，将原有的kick的功能从静默移动改成了断开连接，并且把moveuser的提示完善了一下，其目的是让聊天室“讲道德”。然而，近日部分用户频繁到本聊天室闹事，作为开发者的我（MrZhang365）收到了很多管理员提出的关于把以前的kick功能加回来的请求。但本人比较宽宏大量，于是就只告诉他们加强管理，而不是同意。但在他们再次闹事的今天，我觉得，我已经足够宽容，既然他们不讲道德，就休怪我无情了。  
 
-# Installation
+## 安装和部署  
+### 先决条件  
+- Node.JS 10.15.1 或更高版本  
+- NPM 6.7.0 或更高版本  
 
-## Prerequisites
+### 部署  
+1.  克隆此仓库  
+2.  在仓库根目录下执行 npm install  
+3.  按照向导的提示配置服务器  
+4.  把 `chat.db.bak` 重命名为 `chat.db`  
+5.  修改 client/client.js 的join函数，把与URL相关的代码按照实际情况进行修改
+6.  执行 npm start（请注意防火墙放行相关端口）  
 
-- [node.js 8.10.0](https://nodejs.org/en/download/package-manager/#windows) or higher
-- [npm 5.7.1](https://nodejs.org/en/download/package-manager/#windows) or higher
+## 开发背景  
+> 这个聊天室原本是[MelonFish](https://gitee.com/XChatFish)交给[MrZhang365](https://blog.mrzhang365.cf)开发的XChat聊天室。  
+> 但是由于某些原因，它被开发者魔改成了旧版的小张聊天室。  
+> 2024年9月17日凌晨，MrZhang365经过深思熟虑，决定重写小张聊天室，故出现此项目。  
 
-## Developer Installation
+XChat基于HackChat，HackChat的GitHub仓库地址为：https://github.com/hack-chat/main  
+旧版小张聊天室的仓库地址为：https://github.com/ZhangChat-Dev-Group/ZhangChat
 
-1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
-1. Change the directory: `cd main`
-1. Install the dependencies: `npm install`
-1. Launch: `npm start`
-
-    If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [line 60 of client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L60).
-
-## Live Deployment Installation
-
-See [DEPLOY.md](documentation/DEPLOY.md)
-
-# Contributing
-
-- If you are modifying commands, make sure it is backwards compatible with the legacy client and you update the documentation accordingly.
-- Use [the template](documentation/templateCommand.js) to learn how to create new commands.
-- Use two space indents.
-- Name files in camelCase.
-- Scripts that do not default to strict mode (such as modules) must use the `'use strict'` directive.
-
-# Credits
-
-* [**Marzavec**](https://github.com/marzavec) - *Initial work*
-* [**MinusGix**](https://github.com/MinusGix) - *Base updates*
-* [**Neel Kamath**](https://github.com/neelkamath) - *Base Documentation*
-* [**Carlos Villavicencio**](https://github.com/po5i) - *Syntax Highlighting Integration*
-* [**OpSimple**](https://github.com/OpSimple) - *Modules Added: dumb.js & speak.js*
-* Andrew Belt, https://github.com/AndrewBelt, for original base work
-* [wwandrew](https://github.com/wwandrew), for finding server flaws (including attack vectors) and submitting ~~___incredibly detailed___~~ bug reports
-* [Everyone else](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
-
-# License
-
-This project is licensed under the [WTFPL License](LICENSE).
+## 贡献者  
+- [HackChat](https://github.com/Hack-Chat) 编写底层代码  
+- [MrZhang365](https://blog.mrzhang365.cf) 汉化前端与后端，并编写了许多新功能  

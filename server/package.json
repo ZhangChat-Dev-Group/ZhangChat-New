@@ -1,11 +1,11 @@
 {
-  "name": "hack.chat-v2",
-  "version": "2.1.93",
-  "description": "a minimal distraction free chat application",
+  "name": "zhangchat-new",
+  "version": "1.0.0",
+  "description": "小张聊天室 全新版本",
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hack-chat/main.git"
+    "url": "git+https://github.com/ZhangChat-Dev-Group/ZhangChat-New.git"
   },
   "engines": {
     "node": ">= 8.10.0",
@@ -15,8 +15,8 @@
     "start": "node -r esm main.js",
     "config": "node -r esm src/scripts/configure.js"
   },
-  "author": "Marzavec",
-  "license": "WTFPL",
+  "author": "MrZhang365",
+  "license": "Apache-2.0",
   "dependencies": {
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",

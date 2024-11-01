@@ -5,6 +5,7 @@ import {
   ImportsManager,
   MainServer,
   StatsManager,
+  Logger,
 } from '.';
 
 /**
@@ -27,12 +28,16 @@ class CoreApp {
     * @return {void}
     */
   async init() {
+    this.buildLogger()
     await this.buildConfigManager();
-
     this.buildImportManager();
     this.buildCommandsManager();
     this.buildStatsManager();
     this.buildMainServer();
+  }
+
+  buildLogger() {
+    this.logger = new Logger()
   }
 
   /**

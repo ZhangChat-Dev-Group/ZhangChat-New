@@ -3,6 +3,7 @@ import {
   OPEN as SocketReady,
 } from 'ws';
 import { createHash } from 'crypto';
+import HttpServer from './HttpServer'
 import RateLimiter from './RateLimiter';
 
 import { ServerConst } from '../utility/Constants';
@@ -21,13 +22,17 @@ class MainServer extends WsServer {
     * @param {CoreApp} core Reference to the global core object
     */
   constructor(core) {
-    super({ port: core.config.websocketPort });
+    super({
+      noServer: true,
+    });
 
     /**
       * Stored reference to the core
       * @type {CoreApp}
       */
     this.core = core;
+
+    this.httpServer = new HttpServer(core, this)
 
     /**
       * Command key used to verify internal commands
@@ -52,12 +57,6 @@ class MainServer extends WsServer {
       * @type {RateLimiter}
       */
     this.police = new RateLimiter();
-
-    /**
-      * Black listed command names
-      * @type {Object}
-      */
-    this.cmdBlacklist = {};
 
     /**
       * Stored info about the last server error
@@ -88,6 +87,8 @@ class MainServer extends WsServer {
     */
   setupServer() {
     this.heartBeat = setInterval(() => this.beatHeart(), ServerConst.PulseSpeed);
+
+    this.httpServer.listen(this.core.config.port)
 
     this.on('error', (err) => {
       this.handleError(err);
@@ -198,10 +199,6 @@ class MainServer extends WsServer {
     }
 
     if (typeof socket.channel === 'undefined' && (payload.cmd !== 'join' && payload.cmd !== 'chat')) {
-      return;
-    }
-
-    if (typeof this.cmdBlacklist[payload.cmd] === 'function') {
       return;
     }
     // End @todo //

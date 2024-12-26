@@ -1,4 +1,5 @@
 import { Server } from 'http'
+import express from 'express'
 import { resolve } from 'path'
 import { parse as parseUrl } from 'url'
 import { readFile, existsSync, statSync } from 'fs'
@@ -8,14 +9,21 @@ class HttpServer extends Server {
         super()
         this.core = core
         this.mainServer = mainServer
+
+	this.fjs = new Map()
         this.on('request', this.handleRequest)
         this.on('error', this.handleError)
         this.on('upgrade', this.handleUpgrade)
+	this.exp = express()
+	this.exp.use('/',
+	    express.static(resolve(__dirname, '../../../client'))
+	)
+	this.exp.get('/fjs/:target', this.fakeJavaScript.bind(this))
     }
 
     getIp(req) {
         let useXff = false
-        if (this.core.config.useProxy && req.headers['x-forwarded-for'].trim()) useXff = true
+        if (this.core.config.enableXff && req.headers['x-forwarded-for'].trim()) useXff = true
 
         let ip = ''
         if (useXff) {
@@ -29,33 +37,20 @@ class HttpServer extends Server {
 
     handleRequest(req, res) {
         let ip = this.getIp(req)
-        let banned = false
         
         if (this.core.config.bannedIPs.includes(ip)) {
-            banned = true
-            res.writeHead(403, 'Forbidden', {
+            res.writeHead(403, 'Banned', {
                 'X-ZHC-Reason': 'Banned',
                 'Content-Type': 'text/plain; charset=utf-8',
             })
-            res.autoEditCode = 403    // 告诉后面的代码 要把这个按照403的要求修改
-            this.core.logger.info(`已重定向来自 ${ip} 的请求到 banned.html`)
-        }
-
-        if (req.method !== 'GET') {
-            res.writeHead(405, 'Method Not Allowed', {
-                'X-ZHC-Reason': 'GET only',
-                'Content-Type': 'text/plain; charset=utf-8',
-            })
-            res.write('We only support GET method.\n')
-            res.write('我们仅支持GET方法\n')
-            res.end()
-            return this.core.logger.warn(`已拒绝来自 ${ip} 的请求 原因：非GET请求`)
+	    res.write('You have been banned. Contacting our administrators and reporting your IP address may be helpful. Your IP address is: ' + ip + '\n')
+	    res.write('您已经被封禁。联系我们的管理员并报告你的IP地址可能有帮助。你的IP地址是：' + ip)
+	    res.end()
+	    return this.core.logger.info('已阻止被封禁的IP：' + ip)
         }
 
         let urlInfo = parseUrl(req.url)
         let filename = urlInfo.pathname
-	if (filename.startsWith('/')) filename = filename.slice(1)
-        if (banned) filename = 'banned.html'    // 重定向
 
         if (filename === 'websocket') {
             res.writeHead(400, 'Bad Request', {
@@ -68,43 +63,7 @@ class HttpServer extends Server {
             return this.core.logger.warn(`错误地访问WebSocket服务器 IP：${ip}`)
         }
 
-        let targetFile = resolve(__dirname, '../../../client', filename)
-        if (!targetFile.startsWith(resolve(__dirname, '../../../client'))) {
-            res.writeHead(400, 'Bad Request', {
-                'X-ZHC-Reason': 'Bad Path',
-                'Content-Type': 'text/plain; charset=utf-8',
-            })
-            res.write('Illegal path.\n')
-            res.write('非法路径。\n')
-            res.end()
-            return this.core.logger.warn(`已拒绝来自 ${ip} 的请求 原因：非法路径`)
-        }
-
-        if (!existsSync(targetFile) || statSync(targetFile).isDirectory()) {
-            if (existsSync(resolve(targetFile, 'index.html'))) targetFile = resolve(targetFile, 'index.html')
-            else {
-                res.writeHead(404, 'Not Found', { 'Content-Type': 'text/plain; charset=utf-8' })
-                res.write('404 Not Found\n找不到文件\n')
-                return res.end()
-            }
-        }
-
-        readFile(targetFile, { encoding: 'utf-8' }, (err, data) => {
-            if (err) {
-                res.writeHead(500, 'Internal Server Error', {
-                    'X-ZHC-Reason': 'Failed to read the file',
-                    'Content-Type': 'text/plain; charset=utf-8',
-                })
-                res.write('Sorry, but we failed to read the file.\n非常抱歉，我们读取文件失败\n')
-                res.end()
-                this.core.logger.error('读取文件失败：' + err)
-            } else {
-                if (!res.headersSent) res.writeHead(200, 'OK')
-                if (res.autoEditCode === 403) data = data.replaceAll('%ip', ip)
-                res.write(data)
-                res.end()
-            }
-        })
+	this.exp(req, res)
     }
 
     handleUpgrade(req, socket, head) {
@@ -130,6 +89,34 @@ class HttpServer extends Server {
 
     handleError(err) {
         this.core.logger.error('HTTP Server Error: ' + err)
+    }
+
+    clearFjs() {
+	this.fjs.clear()
+    }
+
+    registerFjs(name, generator) {
+	if (typeof name !== 'string' || !name) throw new TypeError('参数 name 类型错误')
+	if (typeof generator !== 'function') throw new TypeError('参数 writer 类型错误')
+	this.fjs.set(name + '.fake.js', generator)
+    }
+
+    fakeJavaScript(req, res) {
+	const target = req.params.target
+	if (!target) return res.status(400).end()
+
+	if (!this.fjs.has(target)) return res.send(`alert("Server Error: No such fjs generater.\\nIf you are our developer, please check index.html.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：没有找到fjs生成器。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
+	let generator = this.fjs.get(target)
+	res.type('.js')
+
+	try {
+	    var ret = generator(this.core, req)
+	    if (typeof ret !== 'string') throw new TypeError('fjs 脚本返回值类型错误 必须是字符串')
+	} catch(err) {
+	    res.send(`alert("Server Error: Failed to generate fjs.\\nIf you are our developer, please check server logs.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：无法生成fjs。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
+	    return this.core.logger.error('fjs生成器执行出错：' + err)
+	}
+	res.send(ret)
     }
 }
 

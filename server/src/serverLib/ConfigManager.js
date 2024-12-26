@@ -22,12 +22,12 @@ class ConfigManager {
     * Create a `ConfigManager` instance for managing application settings
     * @param {String} basePath executing directory name; __dirname
     */
-  constructor(basePath = __dirname) {
+  constructor(basePath = __dirname, fileName = 'config.json') {
     /**
       * Full path to config.json file
       * @type {String}
       */
-    this.configPath = resolve(basePath, 'config/config.json');
+    this.configPath = resolve(basePath, 'config', fileName);
 
     if (!existsSync(this.configPath)) {
       ensureFileSync(this.configPath);

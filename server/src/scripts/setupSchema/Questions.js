@@ -21,12 +21,10 @@ const Questions = {
       },
     },
 
-    adminName: {
-      description: 'Admin Nickname',
-      pattern: /^"?[a-zA-Z0-9_]+"?$/,
+    email: {
+      description: 'Email',
       type: 'string',
-      message: 'Nicks can only contain letters, numbers and underscores',
-      before: (value) => value.replace(/"/g, ''),
+      message: 'MrZhang365：请填好你的电子邮箱 我不想替你背锅（指你的聊天室报错 用户都联系我）'
     },
 
     adminTrip: {
@@ -43,12 +41,19 @@ const Questions = {
       },
     },
 
-    websocketPort: {
+    port: {
       type: 'integer',
       message: 'The port may only be a number!',
-      description: 'Websocket Port',
-      default: '6060',
+      description: 'HTTP Server Port',
+      default: '3000',
     },
+
+    enableXff: {
+      type: 'boolean',
+      message: 'You should enter true or false',
+      description: 'Will you use reverse proxy servers, such as Nginx and CDN Services?',
+      default: false,
+    }
   },
 };
 

@@ -14,6 +14,7 @@
   "scripts": {
     "start": "pm2 startOrReload pm2.config.js",
     "stop": "pm2 stop pm2.config.js && pm2 delete pm2.config.js",
+    "debug": "node -r esm server/main.js",
     "logs": "pm2 logs",
     "clear": "pm2 flush",
     "status": "pm2 list",
@@ -29,11 +30,12 @@
     "dateformat": "^3.0.3",
     "didyoumean2": "^4.0.0",
     "esm": "^3.2.25",
+    "express": "^4.21.2",
     "fs-extra": "^8.1.0",
     "moment": "^2.30.1",
     "pm2": "^5.2.0",
     "prompt": "^1.0.0",
     "readdir-recursive": "0.0.4",
-    "ws": "^7.2.3"
+    "ws": "^8.18.0"
   }
 }

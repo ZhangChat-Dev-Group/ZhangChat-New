@@ -78,16 +78,7 @@ class SetupWizard {
       process.exit(0);
     }
 
-    // initialize default mods config
-    if (typeof result.mods === 'undefined') {
-      result.mods = [];
-    }
-
-    // If we should log errors with the err stack when they occur.
-    // See: CommandManager.js
-    if (typeof result.logErrDetailed === 'undefined') {
-      result.logErrDetailed = false;
-    }
+    if (!Array.isArray(result.bannedIPs)) result.bannedIPs = []
 
     // finally create the actual JSON file
     try {

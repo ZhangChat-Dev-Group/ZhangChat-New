@@ -97,6 +97,8 @@ class MainServer extends WsServer {
     this.on('connection', (socket, request) => {
       this.newConnection(socket, request);
     });
+    
+    this.core.logger.info('Server is now running on ' + this.core.config.port)
   }
 
   /**

@@ -44,9 +44,6 @@ export function parseNickname(core, data) {
     userInfo.uType = 'admin'; /* @legacy */
     userInfo.trip = 'Admin';
     userInfo.level = UAC.levels.admin;
-  } else if (userInfo.nick.toLowerCase() === core.config.adminName.toLowerCase()) {
-    // they've got the main-admin name while not being an admin
-    return 'You are not the admin, liar!';
   } else if (password) {
     userInfo.trip = hash(password + core.config.tripSalt);
   }

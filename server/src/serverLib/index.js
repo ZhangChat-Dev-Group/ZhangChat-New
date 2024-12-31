@@ -5,3 +5,4 @@ export const MainServer = require('./MainServer').default;
 export const RateLimiter = require('./RateLimiter').default;
 export const StatsManager = require('./StatsManager');
 export const Logger = require('./Logger').default;
+export const PermissionManager = require('./PermissionManager').default;

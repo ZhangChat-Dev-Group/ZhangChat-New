@@ -6,6 +6,7 @@ import {
   MainServer,
   StatsManager,
   Logger,
+  PermissionManager,
 } from '.';
 
 /**
@@ -30,6 +31,7 @@ class CoreApp {
   async init() {
     this.buildLogger()
     await this.buildConfigManager();
+    await this.buildPermissionManager();
     this.buildImportManager();
     this.buildCommandsManager();
     this.buildStatsManager();
@@ -54,6 +56,11 @@ class CoreApp {
       console.error('Missing config.json, have you run: npm run config');
       process.exit(0);
     }
+  }
+
+  async buildPermissionManager() {
+    this.permissions = new PermissionManager(this)
+    await this.permissions.load()
   }
 
   /**

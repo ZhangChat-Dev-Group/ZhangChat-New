@@ -89,6 +89,12 @@ class CommandManager {
       return errText;
     }
 
+    if (this.findBy('id', command.info.id)) {
+      const errText = `Failed to load '${name}': 重复的ID`
+      console.log(errText)
+      return errText
+    }
+
     if (!command.category) {
       const base = join(this.core.dynamicImports.base, 'commands');
 
@@ -115,6 +121,39 @@ class CommandManager {
       }
     }
 
+    if (Array.isArray(command.info.permissions)) {
+      if (!command.info.permissions.every(p => typeof p === 'string' && !!p)) {
+        const errText = `Failed to register permission for '${name}': invalid permission name`
+        console.log(errText)
+        return errText
+      }
+
+      for (let permission of command.info.permissions) {
+        let p = `${command.info.id}.permission.${permission}`
+	      if (this.core.permissions.permissions.has(p)) continue
+	      this.core.permissions.registerPermission(p)
+      }
+    }
+
+    if (Array.isArray(command.info.permissionGroups)) {
+      if (!command.info.permissionGroups.every(g => {
+        if (typeof g.name !== 'string' || !g.name) return false
+        if (!Array.isArray(g.permissions)) return false
+        if (!g.permissions.every(p => typeof p === 'string' && !!p)) return false
+        if (!g.include.every(p => typeof p === 'string' && !!p)) return false
+        return true
+      })) {
+        const errText = `Failed to register permission group for '${name}': invalid permission group name`
+        console.log(errText)
+        return errText
+      }
+
+      for (let group of command.info.permissionGroups) {
+        if (this.core.permissions.permissionGroups.has(group)) continue
+        this.core.permissions.registerPermissionGroup(group.name, group.permissions, group.include)
+      }
+    }
+
     this.commands.push(command);
 
     return '';
@@ -130,7 +169,39 @@ class CommandManager {
     if (typeof object !== 'object') { return 'command setup is invalid'; }
     if (typeof object.run !== 'function') { return 'run function is missing'; }
     if (typeof object.info !== 'object') { return 'info object is missing'; }
-    if (typeof object.info.name !== 'string') { return 'info object is missing a valid name field'; }
+    if (typeof object.info.id !== 'string' || !object.info.id) { return 'info object is missing a valid id field' }
+    if (typeof object.info.name !== 'string' || !object.info.name) { return 'info object is missing a valid name field'; }
+
+    if (!['undefined', 'object'].includes(object.info.permissions)) return 'info.permissions 要么没有 要么是数组'
+    if (Array.isArray(object.info.permissions)) {
+      if (!object.info.permissions.every(p => typeof p === 'string' && !!p)) return '无效的权限名称'
+    } else return 'info.permission 必须是数组'
+
+    if (!['undefined', 'object'].includes(object.info.permissionGroups)) return 'info.permissionGroups 要么没有 要么是数组'
+    if (Array.isArray(object.info.permissionGroups)) {
+      if (!object.info.permissionGroups.every(g => {
+        if (typeof g.name !== 'string' || !g.name) return false
+        if (!Array.isArray(g.permissions)) return false
+        if (!g.permissions.every(p => typeof p === 'string' && !!p)) return false
+        if (!g.include.every(p => typeof p === 'string' && !!p)) return false
+        return true
+      })) {
+        const errText = `info.permissionGroups 格式错误`
+        console.log(errText)
+        return errText
+      }
+    } else return 'info.permissionGroups 必须是数组'
+
+    if (!['object', 'undefined'].includes(typeof object.approve)) { return 'approve 对象必须是object' }    // 我说的是人话吗？
+    if (!Array.isArray(object.approve.permissions) && typeof object.approve.permissions !== 'undefined') { return 'object.approve.permissions 要么没有 要么就必须是Array' }
+    if (Array.isArray(object.approve.permissions)) {
+      if (!object.approve.permissions.every(p => typeof p === 'string' && !!p)) return 'approve.permissions 格式错误'
+    }
+
+    if (!Array.isArray(object.approve.groups) && typeof object.approve.groups !== 'undefined') { return 'object.approve.groups 要么没有 要么就必须是Array' }
+    if (Array.isArray(object.approve.groups)) {
+      if (!object.approve.groups.every(p => typeof p === 'string' && !!p)) return 'approve.groups 格式错误'
+    }
 
     return null;
   }
@@ -254,6 +325,10 @@ class CommandManager {
     * @return {*} Arbitrary module return data
     */
   async execute(command, server, socket, data) {
+    // TODO: 鉴权机制
+    if (typeof command.approve === 'object') {
+
+    }
     if (typeof command.requiredData !== 'undefined') {
       const missing = [];
       for (let i = 0, len = command.requiredData.length; i < len; i += 1) {

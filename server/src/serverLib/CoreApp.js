@@ -8,6 +8,7 @@ import {
   Logger,
   PermissionManager,
 } from '.';
+import { init as initPermissions } from '../utility/Permissions'
 
 /**
   * The core app builds all required classes and maintains a central
@@ -61,6 +62,8 @@ class CoreApp {
   async buildPermissionManager() {
     this.permissions = new PermissionManager(this)
     await this.permissions.load()
+
+    if (!initPermissions(this.permissions)) throw new Error('Failed to init built-in permissions')
   }
 
   /**

@@ -2,15 +2,8 @@
   Description: Removes target trip from the config as a mod and downgrades the socket type
 */
 
-import * as UAC from '../utility/UAC/_info';
-
 // module main
 export async function run(core, server, socket, data) {
-  // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
-  }
-
   // remove trip from config
   core.config.mods = core.config.mods.filter((mod) => mod.trip !== data.trip);
 
@@ -49,6 +42,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['trip'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.removemod',
   name: 'removemod',
   description: 'Removes target trip from the config as a mod and downgrades the socket type',
   usage: `

@@ -2,15 +2,8 @@
   Description: Outputs all current channels and their user nicks
 */
 
-import * as UAC from '../utility/UAC/_info';
-
 // module main
 export async function run(core, server, socket) {
-  // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
-  }
-
   // find all users currently in a channel
   const currentUsers = server.findSockets({
     channel: (channel) => true,
@@ -44,6 +37,7 @@ export async function run(core, server, socket) {
 }
 
 export const info = {
+  id: 'root.zhangsoft.zhangchat.listusers',
   name: 'listusers',
   description: 'Outputs all current channels and sockets in those channels',
   usage: `

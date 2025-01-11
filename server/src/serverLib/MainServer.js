@@ -122,6 +122,18 @@ class MainServer extends WsServer {
     }
   }
 
+  ban(ip) {
+    if (this.core.config.bannedIPs.includes(ip)) return
+    this.core.config.bannedIPs.push(ip)
+  }
+
+  unban(ip) {
+    if (!this.core.config.bannedIPs.includes(ip)) return
+    this.core.config.bannedIPs = this.core.config.bannedIPs.filter(i => i !== ip)
+  }
+
+  isBanned(ip) { return this.core.config.bannedIPs.includes(ip) }
+
   /**
     * Bind listeners for the new socket created on connection to this class
     * @param {ws#WebSocket} socket New socket object
@@ -132,7 +144,8 @@ class MainServer extends WsServer {
   newConnection(socket, request) {
     const newSocket = socket;
 
-    newSocket.address = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+    newSocket.address = this.httpServer.getIp(request)
+    newSocket.ip = newSocket.address
 
     newSocket.on('message', (data) => {
       this.handleData(socket, data);
@@ -160,7 +173,7 @@ class MainServer extends WsServer {
       this.core.commands.handleCommand(this, socket, {
         cmd: 'socketreply',
         cmdKey: this.cmdKey,
-        text: 'You are being rate-limited or blocked.',
+        text: 'You are being rate-limited.',
       });
 
       return;
@@ -247,7 +260,7 @@ class MainServer extends WsServer {
     */
   handleError(err) {
     this.lastErr = err;
-    console.log(`Server error: ${err}`);
+    console.error(`Server error: ${err}`);
   }
 
   /**

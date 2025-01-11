@@ -18,9 +18,7 @@ const hash = (password) => {
 export function parseNickname(core, data) {
   const userInfo = {
     nick: '',
-    uType: 'user', /* @legacy */
     trip: null,
-    level: UAC.levels.default,
   };
 
   // seperate nick from password
@@ -40,22 +38,10 @@ export function parseNickname(core, data) {
     password = data.password;
   }
 
-  if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
-    userInfo.uType = 'admin'; /* @legacy */
-    userInfo.trip = 'Admin';
-    userInfo.level = UAC.levels.admin;
-  } else if (password) {
+  if (password) {
     userInfo.trip = hash(password + core.config.tripSalt);
   }
 
-  // TODO: disallow moderator impersonation
-  // for (const mod of core.config.mods) {
-  core.config.mods.forEach((mod) => {
-    if (userInfo.trip === mod.trip) {
-      userInfo.uType = 'mod'; /* @legacy */
-      userInfo.level = UAC.levels.moderator;
-    }
-  });
 
   return userInfo;
 }
@@ -125,9 +111,7 @@ export async function run(core, server, socket, data) {
     cmd: 'onlineAdd',
     nick: userInfo.nick,
     trip: userInfo.trip || 'null',
-    utype: userInfo.uType, /* @legacy */
     hash: userInfo.hash,
-    level: userInfo.level,
     userid: userInfo.userid,
     channel: data.channel,
   };
@@ -140,9 +124,7 @@ export async function run(core, server, socket, data) {
     users.push({
       nick: newPeerList[i].nick,
       trip: newPeerList[i].trip,
-      utype: newPeerList[i].uType, /* @legacy */
       hash: newPeerList[i].hash,
-      level: newPeerList[i].level,
       userid: newPeerList[i].userid,
       channel: data.channel,
       isme: false,
@@ -150,21 +132,17 @@ export async function run(core, server, socket, data) {
   }
 
   // store user info
-  socket.uType = userInfo.uType; /* @legacy */
   socket.nick = userInfo.nick;
   socket.trip = userInfo.trip;
   socket.channel = data.channel; /* @legacy */
   socket.hash = userInfo.hash;
-  socket.level = userInfo.level;
   socket.userid = userInfo.userid;
 
   nicks.push(socket.nick); /* @legacy */
   users.push({
     nick: socket.nick,
     trip: socket.trip,
-    utype: socket.uType,
     hash: socket.hash,
-    level: socket.level,
     userid: socket.userid,
     channel: data.channel,
     isme: true,

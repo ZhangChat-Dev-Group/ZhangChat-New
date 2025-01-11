@@ -7,9 +7,6 @@ import * as UAC from '../utility/UAC/_info';
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
-  }
 
   // do command reload and store results
   let loadResult = core.dynamicImports.reloadDirCache();
@@ -40,6 +37,7 @@ export async function run(core, server, socket, data) {
 }
 
 export const info = {
+  id: 'root.zhangsoft.zhangchat.reload',
   name: 'reload',
   description: '(Re)loads any new commands into memory, outputs errors if any',
   usage: `

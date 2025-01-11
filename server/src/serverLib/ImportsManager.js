@@ -92,6 +92,7 @@ class ImportsManager {
     Object.keys(this.imports).forEach((dir) => {
       Object.keys(this.imports[dir]).forEach((mod) => {
         delete require.cache[require.resolve(mod)];
+	delete this.imports[dir][mod];
       });
 
       errorText += this.loadDir(dir);

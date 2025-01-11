@@ -69,6 +69,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['nick'];
 export const info = {
+  id: 'root.zhangsoft.ban',
   name: 'ban',
   description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',
   usage: `

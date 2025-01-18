@@ -66,6 +66,8 @@ class PermissionManager {
         let group = this.permissionGroups.get(permissionGroup)
         if (group.trips.includes(trip)) return true
 
+        // emmmmm 这段“继承权限组”的代码存在潜在的死循环BUG
+        // 如果有两个权限组互相继承 那么就会导致这里反复递归调用函数
         for (let g of group.include) {
             if (this.inPermissionGroup(trip, g)) return true
         }

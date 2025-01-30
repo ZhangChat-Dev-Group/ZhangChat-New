@@ -126,6 +126,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['nick'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.invite',
   name: 'invite',
   description: 'Sends an invite to the target client with the provided channel, or a random channel.',
   usage: `

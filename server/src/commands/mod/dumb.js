@@ -168,8 +168,12 @@ export function whisperCheck(core, server, socket, payload) {
   return payload;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const requiredData = ['nick'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.dumb',
   name: 'dumb',
   description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',
   usage: `

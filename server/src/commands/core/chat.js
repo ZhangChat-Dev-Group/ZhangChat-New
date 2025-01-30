@@ -116,6 +116,7 @@ export function finalCmdCheck(core, server, socket, payload) {
 
 export const requiredData = ['text'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.chat',
   name: 'chat',
   description: 'Broadcasts passed `text` field to the calling users channel',
   usage: `

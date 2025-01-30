@@ -6,12 +6,9 @@ exports.init = permissionManager => {
     // `zhangsoft` and `zhangchat` can be replaced with your org name and your chatroom name
     // But you **MUST** obey our LICENSE 
     const prefix = 'root.zhangsoft.zhangchat.group.'
-    const builtInGroups = [ 'admin', 'mod' ]
-
-    for (i of builtInGroups) {
-	if (permissionManager.permissionGroups.has(prefix + i)) continue
-	permissionManager.registerPermissionGroup(prefix + i)
-    }
+	
+    if (!permissionManager.permissionGroups.has(prefix + 'mod')) permissionManager.registerPermissionGroup(prefix + 'mod', [], [ prefix + 'admin' ])
+    if (!permissionManager.permissionGroups.has(prefix + 'admin')) permissionManager.registerPermissionGroup(prefix + 'admin')
 
     return permissionManager.save()
 }

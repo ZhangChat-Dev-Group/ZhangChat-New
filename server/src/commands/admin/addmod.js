@@ -4,38 +4,12 @@
 
 // module main
 export async function run(core, server, socket, data) {
-  // add new trip to config
-  core.config.mods.push({ trip: data.trip });
-
-  // find targets current connections
-  const newMod = server.findSockets({ trip: data.trip });
-  if (newMod.length !== 0) {
-    for (let i = 0, l = newMod.length; i < l; i += 1) {
-      // upgrade privilages
-      newMod[i].uType = 'mod';
-      newMod[i].level = UAC.levels.moderator;
-
-      // inform new mod
-      server.send({
-        cmd: 'info',
-        text: 'You are now a mod.',
-      }, newMod[i]);
-    }
-  }
-
-  // return success message
-  server.reply({
-    cmd: 'info',
-    text: `Added mod trip: ${data.trip}, remember to run 'saveconfig' to make it permanent`,
-  }, socket);
-
-  // notify all mods
+  core.permissions.joinPermissionGroup(data.trip, 'root.zhangsoft.zhangchat.group.mod')
   server.broadcast({
     cmd: 'info',
-    text: `Added mod: ${data.trip}`,
-  }, { level: UAC.isModerator });
-
-  return true;
+    text: `已添加管理员：${data.trip}`
+  }, { _group: 'root.zhangsoft.zhangchat.group.mod' })
+  core.permissions.save(true)
 }
 
 export const requiredData = ['trip'];

@@ -96,8 +96,12 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const requiredData = ['nick'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.kick',
   name: 'kick',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `

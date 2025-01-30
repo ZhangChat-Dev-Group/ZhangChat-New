@@ -67,6 +67,9 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const requiredData = ['nick'];
 export const info = {
   id: 'root.zhangsoft.ban',

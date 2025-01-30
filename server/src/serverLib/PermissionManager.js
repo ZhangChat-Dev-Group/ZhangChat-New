@@ -59,7 +59,14 @@ class PermissionManager {
         else return true
     }
 
-    inPermissionGroup(trip, permissionGroup) {
+    /**
+     * 根据识别码判断一个用户是否属于某个权限组
+     * @param {String} trip 用户识别码
+     * @param {String} permissionGroup 权限组名称
+     * @param {Boolean} ignoreGroup 使用用户列表继承关系检测时 不检测特定的权限组 以防止陷入死循环
+     * @returns {Boolean}
+     */
+    inPermissionGroup(trip, permissionGroup, ignoreGroup = '') {
         // if (!this.permissionGroups.has(permissionGroup) throw new Error('No such permission group')
         if (!this.permissionGroups.has(permissionGroup)) return false
 
@@ -69,7 +76,8 @@ class PermissionManager {
         // emmmmm 这段“继承权限组”的代码存在潜在的死循环BUG
         // 如果有两个权限组互相继承 那么就会导致这里反复递归调用函数
         for (let g of group.include) {
-            if (this.inPermissionGroup(trip, g)) return true
+            if (g === ignoreGroup) continue    // 不检测特定的权限组
+            if (this.inPermissionGroup(trip, g, permissionGroup)) return true
         }
 
         return false

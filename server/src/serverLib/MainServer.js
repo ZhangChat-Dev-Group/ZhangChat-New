@@ -170,11 +170,10 @@ class MainServer extends WsServer {
   handleData(socket, data) {
     // Don't penalize yet, but check whether IP is rate-limited
     if (this.police.frisk(socket.address, 0)) {
-      this.core.commands.handleCommand(this, socket, {
-        cmd: 'socketreply',
-        cmdKey: this.cmdKey,
+      this.reply({
+        cmd: 'warn',
         text: 'You are being rate-limited.',
-      });
+      }, socket)
 
       return;
     }
@@ -223,11 +222,10 @@ class MainServer extends WsServer {
 
     if (typeof payload === 'string') {
       // A hook malfunctioned, reply with error
-      this.core.commands.handleCommand(this, socket, {
-        cmd: 'socketreply',
-        cmdKey: this.cmdKey,
+      this.reply({
+        cmd: 'warn',
         text: payload,
-      });
+      }, socket)
 
       return;
     } if (payload === false) {
@@ -286,11 +284,10 @@ class MainServer extends WsServer {
 
     if (typeof outgoingPayload === 'string') {
       // A hook malfunctioned, reply with error
-      this.core.commands.handleCommand(this, socket, {
-        cmd: 'socketreply',
-        cmdKey: this.cmdKey,
+      this.reply({
+        cmd: 'warn',
         text: outgoingPayload,
-      });
+      }, socket)
 
       return;
     } if (outgoingPayload === false) {
@@ -363,6 +360,7 @@ class MainServer extends WsServer {
     * @return {Array} Clients who matched the filter requirements
     */
   findSockets(filter) {
+    // 测试数据：{ _group: 'root.zhangsoft.zhangchat.group.mod' }
     const filterAttribs = Object.keys(filter);
     const reqCount = filterAttribs.length;
     let curMatch;
@@ -376,7 +374,7 @@ class MainServer extends WsServer {
           switch (typeof filter[filterAttribs[i]]) {
             case 'object': {
               if (Array.isArray(filter[filterAttribs[i]])) {
-                if (filter[filterAttribs[i]].indexOf(socket[filterAttribs[i]]) !== -1) {
+                if (filter[filterAttribs[i]].includes(socket[filterAttribs[i]])) {
                   curMatch += 1;
                 }
               } else if (socket[filterAttribs[i]] === filter[filterAttribs[i]]) {
@@ -398,6 +396,51 @@ class MainServer extends WsServer {
               }
               break;
             }
+          }
+        } else if (filterAttribs[i] === '_group') {
+          switch (typeof filter[filterAttribs[i]]) {
+            case 'string': {
+              if (this.core.permissions.inPermissionGroup(socket.trip, filter[filterAttribs[i]])) {
+                curMatch += 1
+              }
+              break
+            }
+
+            case 'object': {
+              if (Array.isArray(filter[filterAttribs[i]])) {
+                for (let j of filter[filterAttribs[i]]) {
+                  if (this.core.permissions.inPermissionGroup(socket.trip, j)) {
+                    curMatch += 1
+                    break
+                  }
+                }
+              }
+
+              break
+            }
+
+            default: break
+          }
+        } else if (filterAttribs[i] === '_permission') {
+          switch(typeof filter[filterAttribs[i]]) {
+            case 'string': {
+              if (this.core.permissions.hasPermission(socket.trip, filter[filterAttribs[i]])) curMatch += 1
+              break
+            }
+
+            case 'object': {
+              if (Array.isArray(filter[filterAttribs[i]])) {
+                for (let j of filter[filterAttribs[i]]) {
+                  if (this.core.permissions.hasPermission(socket.trip, j)) {
+                    curMatch += 1
+                    break
+                  }
+                }
+              }
+              break
+            }
+
+            default: break
           }
         }
       }

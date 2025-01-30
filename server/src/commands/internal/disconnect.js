@@ -26,6 +26,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['cmdKey'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.disconnect',
   name: 'disconnect',
   usage: 'Internal Use Only',
   description: 'Internally used to relay `onlineRemove` event to clients',

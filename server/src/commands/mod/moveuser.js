@@ -100,8 +100,12 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const requiredData = ['nick', 'channel'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.moveuser',
   name: 'moveuser',
   description: 'This will move the target user nick into another channel',
   usage: `

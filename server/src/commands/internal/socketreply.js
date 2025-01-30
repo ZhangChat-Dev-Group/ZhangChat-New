@@ -17,6 +17,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['cmdKey', 'text'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.socketreply',
   name: 'socketreply',
   usage: 'Internal Use Only',
   description: 'Internally used to relay warnings to clients',

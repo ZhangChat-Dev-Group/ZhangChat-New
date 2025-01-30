@@ -163,6 +163,7 @@ export async function run(core, server, socket, data) {
 
 export const requiredData = ['channel', 'nick'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.join',
   name: 'join',
   description: 'Place calling socket into target channel with target nick & broadcast event to channel',
   usage: `

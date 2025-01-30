@@ -142,6 +142,7 @@ export function whisperCheck(core, server, socket, payload) {
 
 export const requiredData = ['nick', 'text'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.whisper',
   name: 'whisper',
   description: 'Display text on targets screen that only they can see',
   usage: `

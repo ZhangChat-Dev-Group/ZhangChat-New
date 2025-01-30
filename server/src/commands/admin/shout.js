@@ -20,8 +20,12 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.admin']
+}
 export const requiredData = ['text'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.shout',
   name: 'shout',
   description: 'Displays passed text to every client connected',
   usage: `

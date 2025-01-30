@@ -64,7 +64,11 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const info = {
+  id: 'root.zhangsoft.zhangchat.speak',
   name: 'speak',
   description: 'Pardon a dumb user to be able to speak again',
   usage: `

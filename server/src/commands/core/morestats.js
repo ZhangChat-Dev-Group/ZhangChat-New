@@ -80,6 +80,7 @@ export function statsCheck(core, server, socket, payload) {
 }
 
 export const info = {
+  id: 'root.zhangsoft.zhangchat.morestats',
   name: 'morestats',
   description: 'Sends back current server stats to the calling client',
   usage: `

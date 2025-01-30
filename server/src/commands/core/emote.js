@@ -98,6 +98,7 @@ export function emoteCheck(core, server, socket, payload) {
 
 export const requiredData = ['text'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.emote',
   name: 'emote',
   description: 'Typical emote / action text',
   usage: `

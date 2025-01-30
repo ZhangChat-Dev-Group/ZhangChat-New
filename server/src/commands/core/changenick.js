@@ -134,6 +134,7 @@ export function nickCheck(core, server, socket, payload) {
 
 export const requiredData = ['nick'];
 export const info = {
+  id: 'root.zhangsoft.zhangchat.changenick',
   name: 'changenick',
   description: 'This will change your current connections nickname',
   usage: `

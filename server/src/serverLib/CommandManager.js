@@ -175,13 +175,13 @@ class CommandManager {
     }
 
     if (!['object', 'undefined'].includes(typeof object.approve) || object.approve === null) { return 'approve 对象必须是object 或者没有' }    // 我说的是人话吗？
-    if (!Array.isArray(object.approve.permissions) && typeof object.approve.permissions !== 'undefined') { return 'object.approve.permissions 要么没有 要么就必须是Array' }
-    if (Array.isArray(object.approve.permissions)) {
+    if (object.approve && !Array.isArray(object.approve.permissions) && typeof object.approve.permissions !== 'undefined') { return 'object.approve.permissions 要么没有 要么就必须是Array' }
+    if (object.approve && Array.isArray(object.approve.permissions)) {
       if (!object.approve.permissions.every(p => typeof p === 'string' && !!p)) return 'approve.permissions 格式错误'
     }
 
-    if (!Array.isArray(object.approve.groups) && typeof object.approve.groups !== 'undefined') { return 'object.approve.groups 要么没有 要么就必须是Array' }
-    if (Array.isArray(object.approve.groups)) {
+    if (object.approve && !Array.isArray(object.approve.groups) && typeof object.approve.groups !== 'undefined') { return 'object.approve.groups 要么没有 要么就必须是Array' }
+    if (object.approve && Array.isArray(object.approve.groups)) {
       if (!object.approve.groups.every(p => typeof p === 'string' && !!p)) return 'approve.groups 格式错误'
     }
 
@@ -247,6 +247,84 @@ class CommandManager {
   }
 
   /**
+   * 这个代码来自 https://github.com/ZhangChat-Dev-Group/ZhangChat
+   * 等等... 这段代码就是我自己写在旧版ZhangChat里的 所以我copy我自己的代码 应该不用注明来源吧？
+   * 
+   * 通过命令模块info对象的dataRules属性验证用户输入值是否正确
+   * @param {Array} rules 命令模块info对象的dataRules属性
+   * @param {Object} data 数据
+   * @returns {String|true} 如果是字符串，则代表报错；如果是true，则代表验证成功
+   */
+
+  verifyData(rules, data) {
+    const missing = []
+    let i = 0
+
+    if (typeof data.nick === 'string') {
+      var nickArr = data.nick.split('#')
+      nickArr[0] = nickArr[0].replace(/@/g, '')
+      data.nick = nickArr.join('#')
+    }
+
+    for (i in rules) {
+      if (typeof data[rules[i].name] === 'undefined' && !rules[i].required) continue
+      if (typeof data[rules[i].name] === 'undefined') {
+        // 丢了个参数
+        missing.push(rules[i].name)
+        continue    // 继续执行下一次循环
+      }
+
+      if (typeof rules[i].verify === 'function') {
+        // 参数验证模式：自定义函数
+        // 返回值类型为string则报错，为false返回errorMessage的内容（没有则返回默认报错内容），为true则说明验证通过
+        let result = rules[i].verify(data[rules[i].name])
+
+        if (result === true) continue
+
+        return result || rules[i].errorMessage || `错误：参数 ${rules[i].name} 的值有误，请查证后再试`    // 报错
+
+      }else if (isRegExp(rules[i].verify)) {
+        // 参数验证模式：正则表达式
+        if (!rules[i].verify.test(data[rules[i].name])) {
+          // 验证失败
+          return rules[i].errorMessage || `错误：参数 ${rules[i].name} 的值有误，请查证后再试`    // 报错
+        }
+      }
+    }
+
+    if (missing.length !== 0) {
+      // 如果真的丢失参数，则返回错误信息
+      return `错误：您没有提供参数 ${missing.join('、')}`
+    }
+    return true
+  }
+
+  parseText(rules, text) {
+    // 这个代码的来源和 verifyData 一样
+    // 实例：/color 44FF00
+
+    var data = {}
+    var textArray = text.split(' ')
+
+    data.cmd = textArray[0].slice(1)
+
+    for (let i = 0; i < rules.length; i++) {    // Do you know the rules? You know the rules and so do I~
+      if (!textArray[i + 1]) {
+        return data
+      }
+
+      if (rules[i].all) {
+        data[rules[i].name] = textArray.slice(i + 1).join(' ')
+        return data
+      }
+      
+      data[rules[i].name] = textArray[i + 1]
+    }
+
+    return data
+  }
+
+  /**
     * Finds and executes the requested command, or fails with semi-intelligent error
     * @param {Object} server main server reference
     * @param {Object} socket calling socket reference
@@ -281,20 +359,16 @@ class CommandManager {
     });
 
     if (maybe) {
-      // Found a suggestion, pass it on to their dyslexic self
-      return this.handleCommand(server, socket, {
-        cmd: 'socketreply',
-        cmdKey: server.cmdKey,
-        text: `Command not found, did you mean: \`${maybe}\`?`,
-      });
+      return this.core.server.reply({
+        cmd: 'warn',
+        text: `Command not found, did you mean: \`${maybe}\`?`
+      }, socket)
     }
 
-    // Request so mangled that I don't even. . .
-    return this.handleCommand(server, socket, {
-      cmd: 'socketreply',
-      cmdKey: server.cmdKey,
-      text: 'Unknown command',
-    });
+    return this.core.server.reply({
+      cmd: 'warn',
+      text: `Command not found`
+    }, socket)
   }
 
   /**
@@ -333,24 +407,16 @@ class CommandManager {
         text: 'Sorry, but 403 Forbidden.',
       }, socket)
     }
-    if (typeof command.requiredData !== 'undefined') {
-      const missing = [];
-      for (let i = 0, len = command.requiredData.length; i < len; i += 1) {
-        if (typeof data[command.requiredData[i]] === 'undefined') { missing.push(command.requiredData[i]); }
-      }
 
-      if (missing.length > 0) {
-        console.log(`Failed to execute '${
-          command.info.name
-        }': missing required ${missing.join(', ')}\n\n`);
-
-        this.handleCommand(server, socket, {
-          cmd: 'socketreply',
-          cmdKey: server.cmdKey,
-          text: `Failed to execute '${
-            command.info.name
-          }': missing required ${missing.join(', ')}\n\n`,
-        });
+    // 这个来源也一样...
+    if (Array.isArray(command.info.dataRules)) {
+      // 命令模块要求检查用户输入值是否合法
+      const msg = this.verifyData(command.info.dataRules, data)
+      if (typeof msg === 'string') {
+        this.core.server.reply({
+          cmd: 'warn',
+          text: msg
+        }, socket)
 
         return null;
       }
@@ -369,11 +435,10 @@ class CommandManager {
         console.log(errText + err.toString());
       }
 
-      this.handleCommand(server, socket, {
-        cmd: 'socketreply',
-        cmdKey: server.cmdKey,
-        text: errText + err.toString(),
-      });
+      this.core.server.reply({
+        cmd: 'warn',
+        text: errText + err.toString()
+      }, socket)
 
       return null;
     }

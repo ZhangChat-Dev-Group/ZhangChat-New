@@ -80,6 +80,7 @@ export function helpCheck(core, server, socket, payload) {
 }
 
 export const info = {
+  id: 'root.zhangsoft.zhangchat.help',
   name: 'help',
   description: 'Outputs information about the servers current protocol',
   usage: `

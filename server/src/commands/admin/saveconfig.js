@@ -28,7 +28,11 @@ export async function run(core, server, socket) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.admin']
+}
 export const info = {
+  id: 'root.zhangsoft.zhangchat.saveconfig',
   name: 'saveconfig',
   description: 'Writes the current config to disk',
   usage: `

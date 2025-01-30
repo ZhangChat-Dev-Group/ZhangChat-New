@@ -33,7 +33,11 @@ export async function run(core, server, socket) {
   return true;
 }
 
+export const approve = {
+  groups: ['root.zhangsoft.zhangchat.group.mod']
+}
 export const info = {
+  id: 'root.zhangsoft.zhangchat.unbanall',
   name: 'unbanall',
   description: 'Clears all banned ip addresses',
   usage: `

@@ -88,7 +88,7 @@ class HttpServer extends Server {
     }
 
     handleError(err) {
-        this.core.logger.error('HTTP Server Error: ' + err)
+        this.core.logger.error('HTTP服务器错误' + err)
     }
 
     clearFjs() {

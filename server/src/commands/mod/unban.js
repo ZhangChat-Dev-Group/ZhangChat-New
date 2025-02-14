@@ -12,12 +12,14 @@ export async function run(core, server, socket, data) {
       cmd: 'info',
       text: `${socket.nick}#${socket.trip} 解除了所有IP封禁`
     }, { _group: 'root.zhangsoft.zhangchat.group.member' })
+    core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 解封了所有IP`)
   } else {
     server.unban(data.ip)
     server.broadcast({
       cmd: 'info',
       text: `${socket.nick}#${socket.trip} 解除了IP封禁：${data.ip}`
     }, { _group: 'root.zhangsoft.zhangchat.group.member' })
+    core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 解封了IP地址：${data.ip}`)
   }
 
   if (!core.configManager.save()) {

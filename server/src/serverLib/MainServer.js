@@ -99,7 +99,7 @@ class MainServer extends WsServer {
       this.newConnection(socket, request);
     });
     
-    this.core.logger.info('Server is now running on ' + this.core.config.port)
+    this.core.logger.info('服务器正在监听端口：' + this.core.config.port)
   }
 
   /**
@@ -185,7 +185,7 @@ class MainServer extends WsServer {
     if (this.police.frisk(socket.address, 0)) {
       this.reply({
         cmd: 'warn',
-        text: 'You are being rate-limited.',
+        text: '您的操作速度过快，请稍后再试',
       }, socket)
 
       return;
@@ -257,10 +257,12 @@ class MainServer extends WsServer {
     * @return {void}
     */
   handleClose(socket) {
-    this.core.commands.handleCommand(this, socket, {
-      cmd: 'disconnect',
-      cmdKey: this.cmdKey,
-    });
+    if (socket.channel) {
+      this.broadcast({
+        cmd: 'onlineRemove',
+        nick: socket.nick
+      }, { channel: socket.channel })
+    }
   }
 
   /**
@@ -271,7 +273,7 @@ class MainServer extends WsServer {
     */
   handleError(err) {
     this.lastErr = err;
-    console.error(`Server error: ${err}`);
+    this.core.logger.error(`服务器错误：${err}`);
   }
 
   /**
@@ -610,12 +612,8 @@ class MainServer extends WsServer {
           try {
             newPayload = hooks[i].run(this.core, this, socket, newPayload);
           } catch (err) {
-            const errText = `Hook failure, '${type}', '${command}': `;
-            if (this.core.config.logErrDetailed === true) {
-              console.log(errText + err.stack);
-            } else {
-              console.log(errText + err.toString());
-            }
+            const errText = `无法执行Hook，类型为 '${type}' 命令为 '${command}'：`;
+            this.core.logger.error(errText + err.stack);
             return errText + err.toString();
           }
 

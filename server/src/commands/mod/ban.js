@@ -38,6 +38,8 @@ export async function run(core, server, socket, data) {
     }, s)
     s.exterminate()    // Dalek: Exterminate!!!
   })
+
+  core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 封禁了IP地址：${target.address}`)
 }
 
 export const approve = {

@@ -1,6 +1,5 @@
 const colors = require('colors')
 const moment = require('moment')
-const path = require('path')
 
 class Logger {
 	log(text) {

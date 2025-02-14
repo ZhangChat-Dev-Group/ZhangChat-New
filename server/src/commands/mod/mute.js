@@ -57,6 +57,8 @@ export async function run(core, server, socket, data) {
     cmd: 'info',
     text: `你已被禁言，禁言将在 ${diff(time)}后自动解除\n禁言期间内请勿进进出出，以免受到更严厉的处罚\n如有异议，请向管理员发出申诉并提供IP地址：${target.ip}`
   }, { address: target.ip })
+
+  core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 禁言了IP地址：${target.ip} - ${data.time} min`)
 }
 
 // module hook functions

@@ -65,15 +65,15 @@ class ImportsManager {
 
           this.imports[dirName][file] = imported;
         } catch (e) {
-          const err = `Unable to load modules from ${dirName} (${relative(dir, file)})\n${e}`;
+          const err = `无法从 ${dirName} (${relative(dir, file)}) 加载模块：\n${e}`;
           errorText += err;
-          console.error(err);
+          this.core.logger.error(err);
         }
       });
     } catch (e) {
-      const err = `Unable to load modules from ${dirName}\n${e}`;
+      const err = `无法从 ${dirName} 加载模块\n${e}`;
       errorText += err;
-      console.error(err);
+      this.core.logger.error(err);
       return errorText;
     }
 
@@ -92,7 +92,7 @@ class ImportsManager {
     Object.keys(this.imports).forEach((dir) => {
       Object.keys(this.imports[dir]).forEach((mod) => {
         delete require.cache[require.resolve(mod)];
-	delete this.imports[dir][mod];
+	      delete this.imports[dir][mod];
       });
 
       errorText += this.loadDir(dir);

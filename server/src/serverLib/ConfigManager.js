@@ -22,12 +22,13 @@ class ConfigManager {
     * Create a `ConfigManager` instance for managing application settings
     * @param {String} basePath executing directory name; __dirname
     */
-  constructor(basePath = __dirname, fileName = 'config.json') {
+  constructor(basePath = __dirname, fileName = 'config.json', core) {
     /**
       * Full path to config.json file
       * @type {String}
       */
     this.configPath = resolve(basePath, 'config', fileName);
+    this.core = core
 
     if (!existsSync(this.configPath)) {
       ensureFileSync(this.configPath);
@@ -76,10 +77,11 @@ class ConfigManager {
         spaces: 2,
       });
       removeSync(backupPath);
+      this.core.logger.info(`已保存配置文件`)
 
       return true;
     } catch (err) {
-      console.log(`Failed to save config file: ${err}`);
+      this.core.logger.error(`无法保存配置文件：${err}`);
 
       return false;
     }

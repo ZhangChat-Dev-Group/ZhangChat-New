@@ -43,14 +43,6 @@ class CommandManager {
       * @type {Array}
       */
     this.categories = [];
-
-    /**
-      * Full path to config.json file
-      * @type {String}
-      */
-    if (typeof this.core.config.logErrDetailed === 'undefined') {
-      this.core.config.logErrDetailed = false;
-    }
   }
 
   /**
@@ -85,21 +77,21 @@ class CommandManager {
     const error = this.validateCommand(command);
 
     if (error) {
-      const errText = `Failed to load command module '${name}': ${error}`;
-      console.log(errText);
+      const errText = `无法加载命令：'${name}'：${error}`;
+      this.core.logger.error(errText);
       return errText;
     }
 
     if (this.findBy('id', command.info.id)) {
-      const errText = `Failed to load '${name}': 重复的ID`
-      console.log(errText)
+      const errText = `无法加载命令：'${name}'：重复的ID`
+      this.core.logger.error(errText)
       return errText
     }
 
     if (!command.category) {
       const base = join(this.core.dynamicImports.base, 'commands');
 
-      let category = 'Uncategorized';
+      let category = '未分类';
       if (file.indexOf(sep) > -1) {
         category = dirname(relative(base, file))
           .replace(new RegExp(sep.replace('\\', '\\\\'), 'g'), '/');
@@ -116,8 +108,8 @@ class CommandManager {
       try {
         command.init(this.core);
       } catch (err) {
-        const errText = `Failed to initialize '${name}': ${err}`;
-        console.log(errText);
+        const errText = `无法初始化命令 '${name}'：${err}`;
+        this.core.logger.error(errText);
         return errText;
       }
     }
@@ -149,11 +141,11 @@ class CommandManager {
     * @return {String} Module errors or null if none
     */
   validateCommand(object) {
-    if (typeof object !== 'object') { return 'command setup is invalid'; }
-    if (typeof object.run !== 'function') { return 'run function is missing'; }
-    if (typeof object.info !== 'object') { return 'info object is missing'; }
-    if (typeof object.info.id !== 'string' || !object.info.id) { return 'info object is missing a valid id field' }
-    if (typeof object.info.name !== 'string' || !object.info.name) { return 'info object is missing a valid name field'; }
+    if (typeof object !== 'object') { return '命令模块无效'; }
+    if (typeof object.run !== 'function') { return '找不到run函数'; }
+    if (typeof object.info !== 'object') { return '找不到info对象'; }
+    if (typeof object.info.id !== 'string' || !object.info.id) { return 'info对象的id属性错误' }
+    if (typeof object.info.name !== 'string' || !object.info.name) { return 'info对象的name属性错误'; }
 
     if (!Array.isArray(object.info.permissions) && typeof object.info.permissions !== 'undefined') return 'info.permissions 要么没有 要么是数组'
     if (Array.isArray(object.info.permissions)) {
@@ -170,7 +162,6 @@ class CommandManager {
         return true
       })) {
         const errText = `info.permissionGroups 格式错误`
-        console.log(errText)
         return errText
       }
     }
@@ -368,13 +359,13 @@ class CommandManager {
     if (maybe) {
       return this.core.server.reply({
         cmd: 'warn',
-        text: `Command not found, did you mean: \`${maybe}\`?`
+        text: `找不到命令，敢问您指的是这个吗：\`${maybe}\`?`
       }, socket)
     }
 
     return this.core.server.reply({
       cmd: 'warn',
-      text: `Command not found`
+      text: `找不到命令`
     }, socket)
   }
 
@@ -411,14 +402,14 @@ class CommandManager {
       
       if (!approved) return this.core.server.reply({
         cmd: 'warn',
-        text: '抱歉，您没有执行这个命令的权限',
+        text: '抱歉，你没有执行这个命令的权限',
       }, socket)
     }
 
     if (typeof command.info.rateLimit === 'number') {
       if (server.police.frisk(socket.address, command.info.rateLimit)) return server.reply({
         cmd: 'warn',
-        text: '您的操作过于频繁 请稍后再试'
+        text: '您执行此命令的速度太快，请稍后重试'
       }, socket)
     }
 
@@ -440,20 +431,12 @@ class CommandManager {
     try {
       await command.run(this.core, server, socket, data);
     } catch (err) {
-      const errText = `无法执行 '${command.info.name}' 命令: `;
+      const errText = `# : (\n# 非常无语，我们出错了\n## 由于未知原因，我们无法执行 ${command.info.name} 命令\n小张聊天室 2.0 技术尚不成熟，尽管我们竭尽全力地写代码，但出错仍然是在所难免的\n我们恳请您将此错误报告给开发人员，以便于为您提供最好的体验\n联系方式： ${this.core.config.email}`;
 
       // If we have more detail enabled, then we get the trace
       // if it isn't, or the property doesn't exist, then we'll get only the message
-      if (this.core.config.logErrDetailed === true) {
-        console.log(errText + err.stack);
-      } else {
-        console.log(errText + err.toString());
-      }
-
-      this.core.server.reply({
-        cmd: 'warn',
-        text: errText + err.toString()
-      }, socket)
+      this.core.logger.error(errText + err.stack);
+      socket.replyWarn(errText + err.toString())
 
       return null;
     }

@@ -19,6 +19,8 @@ export async function run(core, server, socket, data) {
       ${loadResult}`;
   }
 
+  core.logger.info(loadResult)
+
   // send results to moderators (which the user using this command is higher than)
   server.broadcast({
     cmd: 'info',

@@ -50,11 +50,11 @@ class CoreApp {
     * @return {void}
     */
   async buildConfigManager() {
-    this.configManager = new ConfigManager(join(__dirname, '../..'));
+    this.configManager = new ConfigManager(join(__dirname, '../..'), 'config.json', this);
     this.config = await this.configManager.load();
 
     if (this.config === false) {
-      console.error('Missing config.json, have you run: npm run config');
+      this.logger.error('无法加载 config.json，你是否运行了 npm run config？');
       process.exit(0);
     }
   }
@@ -63,7 +63,7 @@ class CoreApp {
     this.permissions = new PermissionManager(this)
     await this.permissions.load()
 
-    if (!initPermissions(this.permissions)) throw new Error('Failed to init built-in permissions')
+    if (!initPermissions(this.permissions)) throw new Error('无法初始化内置权限')
   }
 
   /**

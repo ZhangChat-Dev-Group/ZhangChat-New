@@ -19,6 +19,8 @@ export async function run(core, server, socket, data) {
 
     socket.replyWarn(`代码执行出错：${msg}\n详细信息：\n${stack}`)
   }
+
+  core.logger.info(`${socket.nick}#${socket.trip} (${socket.ip}) 执行了JS代码：\n${data.code}`)
 }
 
 export const approve = {

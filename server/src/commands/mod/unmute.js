@@ -20,6 +20,7 @@ export async function run(core, server, socket, data) {
       cmd: 'info',
       text: `${socket.nick}#${socket.trip} 解除了所有禁言`
     }, { _group: 'root.zhangsoft.zhangchat.group.member' })
+    core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 解除了所有禁言`)
     return true
   }
 
@@ -35,6 +36,8 @@ export async function run(core, server, socket, data) {
     cmd: 'info',
     text: `管理员已将你的禁言手动解除`
   }, { address: data.ip })
+
+  core.logger.info(`(${socket.ip}) ${socket.nick}#${socket.trip} 解除了禁言：${data.ip}`)
 }
 
 export const approve = {

@@ -11,7 +11,7 @@
 const Questions = {
   properties: {
     tripSalt: {
-      description: 'Salt (leave as default)',
+      description: '盐（留空使用默认值）',
       type: 'string',
       hidden: true,
       replace: '*',
@@ -22,7 +22,7 @@ const Questions = {
     },
 
     email: {
-      description: 'Email',
+      description: '电子邮箱',
       type: 'string',
       message: 'MrZhang365：请填好你的电子邮箱 我不想替你背锅（指你的聊天室报错 用户都联系我）'
     },
@@ -31,8 +31,8 @@ const Questions = {
       type: 'string',
       hidden: true,
       replace: '*',
-      description: 'Admin Password',
-      message: 'You must enter or re-enter a password',
+      description: '站长密码',
+      message: '你必须输入密码',
       before: (value) => {
         const crypto = require('crypto');
         const sha = crypto.createHash('sha256');
@@ -43,15 +43,15 @@ const Questions = {
 
     port: {
       type: 'integer',
-      message: 'The port may only be a number!',
-      description: 'HTTP Server Port',
+      message: '端口号必须为整数',
+      description: '端口',
       default: '3000',
     },
 
     enableXff: {
       type: 'boolean',
-      message: 'You should enter true or false',
-      description: 'Will you use reverse proxy servers, such as Nginx and CDN Services?',
+      message: '你只能输入 true 或 false',
+      description: '是否使用反向代理',
       default: false,
     }
   },

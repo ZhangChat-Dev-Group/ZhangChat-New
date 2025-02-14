@@ -709,6 +709,15 @@ $('#clear-messages').onclick = function () {
     messages.innerHTML = '';
 }
 
+$('#data-purge').onclick = function() {
+    localStorageSet('my-nick', '')
+    localStorageSet('password', '')
+    pushMessage({
+        nick: '*',
+        text: '已清除用户信息，刷新后生效'
+    })
+}
+
 // Restore settings from localStorage
 
 if (localStorageGet('pin-sidebar') == 'true') {

@@ -2,7 +2,8 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
-import * as UAC from '../utility/UAC/_info';
+import { verifyNick, verifyChannel } from '../utility/_StringTester';
+import { getUserDetails } from '../utility/UAC/_info';
 
 // module support functions
 const crypto = require('crypto');
@@ -22,56 +23,95 @@ export function parseNickname(core, data) {
   };
 
   // seperate nick from password
-  const nickArray = data.nick.split('#', 2);
-  userInfo.nick = nickArray[0].trim();
+  userInfo.nick = data.nick
 
-  if (!UAC.verifyNickname(userInfo.nick)) {
+  if (!verifyNick(userInfo.nick)) {
     // return error as string
-    return 'Nickname must consist of up to 24 letters, numbers, and underscores';
+    return '昵称应当由汉字、大小写字母、数字和下划线组成，且最多24个字符';
   }
 
   let password = undefined;
   // prioritize hash in nick for password over password field
-  if (typeof nickArray[1] === 'string') {
-    password = nickArray[1];
-  } else if (typeof data.password === 'string') {
-    password = data.password;
-  }
+  if (!data.safeMode && data.password) {
+    // 客户端是否启用了安全模式
+    // 安全模式：客户端将经过SHA256加密后的密码发给服务器，服务器无法读取明文密码
+    // 如果没有启用 那么就替客户端加密
+    let sha256 = crypto.createHash('sha256')
+    sha256.update(data.password)
+    password = sha256.digest('hex')
+    userInfo.safeWarning = true
+  } else password = data.password
 
   if (password) {
     userInfo.trip = hash(password + core.config.tripSalt);
+  } else {
+    userInfo.trip = ''
   }
-
 
   return userInfo;
 }
 
-// module main
 export async function run(core, server, socket, data) {
-  // check for spam
-  if (server.police.frisk(socket.address, 3)) {
+  const userInfo = this.parseNickname(core, data)
+  if (typeof userInfo === 'string') return server.reply({
+    cmd: 'warn',
+    text: userInfo
+  }, socket)
+
+  if (userInfo.safeWarning) return socket.replyWarn(`# 安全提醒：\n为保证用户数据安全，本站已启用安全模式，即客户端向服务器发送SHA256加密后的密码而不是明文密码\n我们检测到您的客户端不支持安全模式，因此帮您额外加密了密码\n请您向该客户端的开发者报告此问题，感谢您的理解与支持`,
+    socket)
+
+  if (server.findSocket({
+    channel: data.channel,
+    nick: userInfo.nick,
+  })) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are joining channels too fast. Wait a moment and try again.',
-    }, socket);
+      text: `已经有一位用户使用了 \`${userInfo.nick}\` 这个昵称，根据先到先得原则，您需要更换一个新昵称`
+    }, socket)
   }
 
-  // calling socket already in a channel
-  if (typeof socket.channel !== 'undefined') {
-    return true;
+  userInfo.hash = server.getSocketHash(socket.address)
+  userInfo.channel = data.channel
+
+  let joinNotice = {
+    cmd: 'onlineAdd',
+    ...getUserDetails(socket),
+    nick: userInfo.nick,
+    trip: userInfo.trip,
+    channel: userInfo.channel
   }
 
-  // check user input
-  if (typeof data.channel !== 'string' || typeof data.nick !== 'string') {
-    return true;
+  let userList = {
+    cmd: 'onlineSet',
+    users: [],
+    nicks: [],
   }
 
-  const channel = data.channel.trim();
-  if (!channel) {
-    // must join a non-blank channel
-    return true;
+  for (let s of server.findSockets({
+    channel: data.channel
+  })) {
+    server.reply(joinNotice, s)
+    userList.users.push({
+      ...getUserDetails(s),
+      isme: false,
+    })
+    userList.nicks.push(s.nick)
   }
 
+  for (let i in userInfo) socket[i] = userInfo[i]
+  userList.users.push({
+    ...getUserDetails(socket),
+    isme: true,
+  })
+  userList.nicks.push(socket.nick)
+
+  server.reply(userList, socket)
+  core.stats.increment('users-joined')
+}
+ 
+// module main
+export async function run_old(core, server, socket, data) {
   const userInfo = this.parseNickname(core, data);
   if (typeof userInfo === 'string') {
     return server.reply({
@@ -90,16 +130,11 @@ export async function run(core, server, socket, data) {
     // that nickname is already in that channel
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname taken',
+      text: '昵称被占用',
     }, socket);
   }
 
   userInfo.hash = server.getSocketHash(socket);
-
-  // assign "unique" socket ID
-  if (typeof socket.userid === 'undefined') {
-    userInfo.userid = Math.floor(Math.random() * 9999999999999);
-  }
 
   // TODO: place this within it's own function allowing import
   // prepare to notify channel peers
@@ -110,7 +145,7 @@ export async function run(core, server, socket, data) {
   const joinAnnouncement = {
     cmd: 'onlineAdd',
     nick: userInfo.nick,
-    trip: userInfo.trip || 'null',
+    trip: userInfo.trip || '',
     hash: userInfo.hash,
     userid: userInfo.userid,
     channel: data.channel,
@@ -161,11 +196,28 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
-export const requiredData = ['channel', 'nick'];
 export const info = {
-  id: 'root.zhangsoft.zhangchat.join',
+  id: 'root.hackchat.join',
   name: 'join',
-  description: 'Place calling socket into target channel with target nick & broadcast event to channel',
+  description: '加入一个频道',
   usage: `
     API: { cmd: 'join', nick: '<your nickname>', password: '<optional password>', channel: '<target channel>' }`,
+  rateLimit: 3,
+  dataRules: [
+    {
+      name: 'nick',
+      required: true,
+      verify: verifyNick
+    },
+    {
+      name: 'channel',
+      required: true,
+      verify: verifyChannel
+    },
+    {
+      name: 'password',
+      required: false,
+      all: true
+    }
+  ]
 };

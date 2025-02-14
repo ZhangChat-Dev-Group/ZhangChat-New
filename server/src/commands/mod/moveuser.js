@@ -3,111 +3,86 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import { verifyNick, verifyChannel } from '../utility/_StringTester'
 
 // module main
 export async function run(core, server, socket, data) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
-    return server.police.frisk(socket.address, 10);
-  }
-
-  // check user input
-  if (typeof data.nick !== 'string' || typeof data.channel !== 'string') {
-    return true;
-  }
-
-  if (data.channel === socket.channel) {
-    // moving them into the same channel? y u do this?
-    return true;
-  }
-
-  const badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
-
-  if (badClients.length === 0) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Could not find user in channel',
-    }, socket);
-  }
-
-  const badClient = badClients[0];
-
-  if (badClient.level >= socket.level) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Cannot move other users of the same level, how rude',
-    }, socket);
-  }
-
-  const currentNick = badClient.nick.toLowerCase();
-  const userExists = server.findSockets({
-    channel: data.channel,
-    nick: (targetNick) => targetNick.toLowerCase() === currentNick,
-  });
-
-  if (userExists.length > 0) {
-    // That nickname is already in that channel
-    return true;
-  }
-
-  const peerList = server.findSockets({ channel: socket.channel });
-
-  if (peerList.length > 1) {
-    for (let i = 0, l = peerList.length; i < l; i += 1) {
-      server.reply({
-        cmd: 'onlineRemove',
-        nick: peerList[i].nick,
-      }, badClient);
-
-      if (badClient.nick !== peerList[i].nick) {
-        server.reply({
-          cmd: 'onlineRemove',
-          nick: badClient.nick,
-        }, peerList[i]);
-      }
-    }
-  }
-
-  // TODO: import from join module
-  const newPeerList = server.findSockets({ channel: data.channel });
-  const moveAnnouncement = {
-    cmd: 'onlineAdd',
-    nick: badClient.nick,
-    trip: badClient.trip || 'null',
-    hash: server.getSocketHash(badClient),
-  };
-  const nicks = [];
-
-  for (let i = 0, l = newPeerList.length; i < l; i += 1) {
-    server.reply(moveAnnouncement, newPeerList[i]);
-    nicks.push(newPeerList[i].nick);
-  }
-
-  nicks.push(badClient.nick);
-
-  server.reply({
-    cmd: 'onlineSet',
-    nicks,
-  }, badClient);
-
-  badClient.channel = data.channel;
-
+  let target = server.findSocket({
+    channel: socket,
+    nick: data.nick,
+  })
+  if (!target) return socket.replyInfo(`找不到 ${data.nick}`)
+  if (core.permissions.inPermissionGroup(target.trip, 'root.zhangsoft.zhangchat.group.mod')) return server.reply({
+    cmd: 'warn',
+    text: `您不能移动 ${data.nick}，因为对方属于管理员权限组`
+  }, socket)
   server.broadcast({
     cmd: 'info',
-    text: `${badClient.nick} was moved into ?${data.channel}`,
-  }, { channel: data.channel });
+    text: `已将 ${target.nick} 移出该频道`
+  }, { channel: socket.channel })
+  target.channel = null
+  server.broadcast({
+    cmd: 'onlineRemove',
+    nick: target.nick
+  }, { channel: target.channel })
 
-  return true;
+  let onlineSet = {
+    cmd: 'onlineSet',
+    nicks: [],
+    users: [],
+  }
+  for (let s of server.findSockets({ channel: data.channel })) {
+    s.reply({
+      cmd: 'onlineAdd',
+      ...UAC.getUserDetails(target),
+      channel: s.channel,
+    })
+    onlineSet.nicks.push(s.nick)
+    onlineSet.users.push({
+      ...UAC.getUserDetails(s),
+      isme: false
+    })
+  }
+
+  target.channel = data.channel
+  onlineSet.nicks.push(target.nick)
+  onlineSet.users.push({
+    ...UAC.getUserDetails(target),
+    isme: true,
+  })
+  target.reply(onlineSet)
+  server.broadcast({
+    cmd: 'info',
+    text: `已将 ${target.nick} 移入该频道`
+  }, { channel: target.channel })
+  server.broadcast({
+    cmd: 'info',
+    text: `${socket.nick}#${socket.trip} 将 ${target.nick} 从 ?${socket.channel} 移动到 ?${target.channel}`
+  }, { _group: 'root.zhangsoft.zhangchat.group.member' })
 }
 
 export const approve = {
   groups: ['root.zhangsoft.zhangchat.group.mod']
 }
-export const requiredData = ['nick', 'channel'];
 export const info = {
-  id: 'root.zhangsoft.zhangchat.moveuser',
+  id: 'root.hackchat.moveuser',
   name: 'moveuser',
-  description: 'This will move the target user nick into another channel',
+  aliases: ['mvuser'],
+  description: '将目标用户移动到指定频道',
   usage: `
+    发送 /moveuser  <目标用户> <目标频道>
     API: { cmd: 'moveuser', nick: '<target nick>', channel: '<new channel>' }`,
+  runByChat: true,
+  dataRules: [
+    {
+      name: 'nick',
+      required: true,
+      verify: verifyNick,
+    },
+    {
+      name: 'channel',
+      required: true,
+      verify: verifyChannel,
+    },
+  ]
 };

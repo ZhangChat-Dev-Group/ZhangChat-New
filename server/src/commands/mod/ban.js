@@ -2,79 +2,58 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
-import * as UAC from '../utility/UAC/_info';
+import { verifyNick } from '../utility/_StringTester'
 
 // module main
 export async function run(core, server, socket, data) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
-    return server.police.frisk(socket.address, 10);
-  }
-
-  // check user input
-  if (typeof data.nick !== 'string') {
-    return true;
-  }
-
-  // find target user
-  const targetNick = data.nick;
-  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
-
-  if (badClient.length === 0) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Could not find user in channel',
-    }, socket);
-  }
-
-  [badClient] = badClient;
-
-  // i guess banning mods or admins isn't the best idea?
-  if (badClient.level >= socket.level) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Cannot ban other users of the same level, how rude',
-    }, socket);
-  }
-
-  // commit arrest record
-  server.police.arrest(badClient.address, badClient.hash);
-
-  console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
-
-  // notify normal users
-  server.broadcast({
-    cmd: 'info',
-    text: `Banned ${targetNick}`,
-    user: UAC.getUserDetails(badClient),
-  }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
-
-  // notify mods
-  server.broadcast({
-    cmd: 'info',
-    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
+  const target = server.findSocket({
     channel: socket.channel,
-    user: UAC.getUserDetails(badClient),
-    banner: UAC.getUserDetails(socket),
-  }, { level: UAC.isModerator });
+    nick: data.nick
+  })
 
-  // force connection closed
-  badClient.terminate();
+  if (!target) return server.reply({
+    cmd: 'warn',
+    text: '找不到 ' + data.nick
+  }, socket)
 
-  // stats are fun
-  core.stats.increment('users-banned');
+  if (core.permissions.inPermissionGroup(target.trip, 'root.zhangsoft.zhangchat.group.mod')) return server.reply({
+    cmd: 'warn',
+    text: `您不能封禁 ${data.nick}，因为对方属于管理员权限组`
+  }, socket)
 
-  return true;
+  server.ban(target.address)
+  server.broadcast({
+    cmd: 'info',
+    text: `已封禁 ${target.nick}`
+  }, { channel: socket.channel })
+  server.broadcast({
+    cmd: 'info',
+    text: `${socket.nick}#${socket.trip} 已封禁用户 ${target.nick}\n目标IP地址：${target.address}`
+  }, { _group: 'root.zhangsoft.zhangchat.group.member' })
+
+  server.findSockets({ address: target.address }).forEach(s => {
+    server.reply({
+      cmd: 'warn',
+      text: `# : (\n## 下线提醒\n您已被管理员封禁 即将被断开连接\n如需解封 请向管理员或站长提出申请或者申诉 并且提供这个IP地址：${s.address}`
+    }, s)
+    s.exterminate()    // Dalek: Exterminate!!!
+  })
 }
 
 export const approve = {
   groups: ['root.zhangsoft.zhangchat.group.mod']
 }
-export const requiredData = ['nick'];
 export const info = {
-  id: 'root.zhangsoft.ban',
+  id: 'root.hackchat.ban',
   name: 'ban',
-  description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',
+  description: '通过昵称封禁一个用户 其实质是封禁IP地址',
   usage: `
+    发送 /ban <目标用户>
     API: { cmd: 'ban', nick: '<target nickname>' }`,
+  runByChat: true,
+  dataRules: [{
+    name: 'nick',
+    required: true,
+    verify: verifyNick,
+  }],
 };

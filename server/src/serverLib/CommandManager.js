@@ -6,6 +6,7 @@ import {
   relative,
 } from 'path';
 import didYouMean from 'didyoumean2';
+import { isRegExp } from 'util/types';
 
 // default command modules path
 const CmdDir = 'src/commands';
@@ -241,9 +242,15 @@ class CommandManager {
     * @param {Object} server main server object
     */
   initCommandHooks(server) {
-    this.commands.filter((c) => typeof c.initHooks !== 'undefined').forEach(
+    this.commands.filter((c) => typeof c.initHooks === 'function').forEach(
       (c) => c.initHooks(server),
     );
+  }
+
+  initFakeJavaScript(httpServer) {
+    this.commands.filter(c => typeof c.initFjs === 'function').forEach(
+      c => c.initFjs(httpServer)
+    )
   }
 
   /**
@@ -404,7 +411,14 @@ class CommandManager {
       
       if (!approved) return this.core.server.reply({
         cmd: 'warn',
-        text: 'Sorry, but 403 Forbidden.',
+        text: '抱歉，您没有执行这个命令的权限',
+      }, socket)
+    }
+
+    if (typeof command.info.rateLimit === 'number') {
+      if (server.police.frisk(socket.address, command.info.rateLimit)) return server.reply({
+        cmd: 'warn',
+        text: '您的操作过于频繁 请稍后再试'
       }, socket)
     }
 
@@ -422,10 +436,11 @@ class CommandManager {
       }
     }
 
+    this.core.stats.increment('cmd-executed')
     try {
-      return await command.run(this.core, server, socket, data);
+      await command.run(this.core, server, socket, data);
     } catch (err) {
-      const errText = `Failed to execute '${command.info.name}': `;
+      const errText = `无法执行 '${command.info.name}' 命令: `;
 
       // If we have more detail enabled, then we get the trace
       // if it isn't, or the property doesn't exist, then we'll get only the message

@@ -2,12 +2,8 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
-import * as UAC from '../utility/UAC/_info';
-
 // module main
 export async function run(core, server, socket, data) {
-  // increase rate limit chance and ignore if not admin
-
   // do command reload and store results
   let loadResult = core.dynamicImports.reloadDirCache();
   loadResult += core.commands.loadCommands();
@@ -17,21 +13,17 @@ export async function run(core, server, socket, data) {
 
   // build reply based on reload results
   if (loadResult === '') {
-    loadResult = `Reloaded ${core.commands.commands.length} commands, 0 errors`;
+    loadResult = `已重载 ${core.commands.commands.length} 个命令，暂无报错，祝你好运`;
   } else {
-    loadResult = `Reloaded ${core.commands.commands.length} commands, error(s):
+    loadResult = `已重载 ${core.commands.commands.length} 个命令，报错信息：
       ${loadResult}`;
-  }
-
-  if (typeof data.reason !== 'undefined') {
-    loadResult += `\nReason: ${data.reason}`;
   }
 
   // send results to moderators (which the user using this command is higher than)
   server.broadcast({
     cmd: 'info',
     text: loadResult,
-  }, { level: UAC.isModerator });
+  }, { _group: 'root.zhangsoft.zhangchat.group.mod' });
 
   return true;
 }
@@ -40,9 +32,12 @@ export const approve = {
   groups: ['root.zhangsoft.zhangchat.group.admin']
 }
 export const info = {
-  id: 'root.zhangsoft.zhangchat.reload',
+  id: 'root.hackchat.reload',
   name: 'reload',
-  description: '(Re)loads any new commands into memory, outputs errors if any',
+  description: '热重载所有命令模块',
   usage: `
-    API: { cmd: 'reload', reason: '<optional reason append>' }`,
+    发送 /reload
+    API: { cmd: 'reload' }
+    代码不会陪你演戏，你糊弄代码，代码就会糊弄你`,
+  runByChat: true,
 };

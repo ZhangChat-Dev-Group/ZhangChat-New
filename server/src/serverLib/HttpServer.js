@@ -2,7 +2,6 @@ import { Server } from 'http'
 import express from 'express'
 import { resolve } from 'path'
 import { parse as parseUrl } from 'url'
-import { readFile, existsSync, statSync } from 'fs'
 
 class HttpServer extends Server {
     constructor(core, mainServer) {
@@ -10,15 +9,15 @@ class HttpServer extends Server {
         this.core = core
         this.mainServer = mainServer
 
-	this.fjs = new Map()
+        this.fjs = new Map()
         this.on('request', this.handleRequest)
         this.on('error', this.handleError)
         this.on('upgrade', this.handleUpgrade)
-	this.exp = express()
-	this.exp.use('/',
-	    express.static(resolve(__dirname, '../../../client'))
-	)
-	this.exp.get('/fjs/:target', this.fakeJavaScript.bind(this))
+        this.exp = express()
+        this.exp.use('/',
+            express.static(resolve(__dirname, '../../../client'))
+        )
+        this.exp.get('/fjs/:target', this.fakeJavaScript.bind(this))
     }
 
     getIp(req) {
@@ -36,6 +35,7 @@ class HttpServer extends Server {
     }
 
     handleRequest(req, res) {
+        this.core.stats.increment('http-requests')
         let ip = this.getIp(req)
         
         if (this.core.config.bannedIPs.includes(ip)) {
@@ -43,10 +43,10 @@ class HttpServer extends Server {
                 'X-ZHC-Reason': 'Banned',
                 'Content-Type': 'text/plain; charset=utf-8',
             })
-	    res.write('You have been banned. Contacting our administrators and reporting your IP address may be helpful. Your IP address is: ' + ip + '\n')
-	    res.write('您已经被封禁。联系我们的管理员并报告你的IP地址可能有帮助。你的IP地址是：' + ip)
-	    res.end()
-	    return this.core.logger.info('已阻止被封禁的IP：' + ip)
+            res.write('You have been banned. Contacting our administrators and reporting your IP address may be helpful. Your IP address is: ' + ip + '\n')
+            res.write('您已经被封禁。联系我们的管理员并报告你的IP地址可能有帮助。你的IP地址是：' + ip)
+            res.end()
+            return this.core.logger.info('已阻止被封禁的IP：' + ip)
         }
 
         let urlInfo = parseUrl(req.url)
@@ -63,7 +63,7 @@ class HttpServer extends Server {
             return this.core.logger.warn(`错误地访问WebSocket服务器 IP：${ip}`)
         }
 
-	this.exp(req, res)
+	    this.exp(req, res)
     }
 
     handleUpgrade(req, socket, head) {
@@ -92,31 +92,31 @@ class HttpServer extends Server {
     }
 
     clearFjs() {
-	this.fjs.clear()
+	    this.fjs.clear()
     }
 
     registerFjs(name, generator) {
-	if (typeof name !== 'string' || !name) throw new TypeError('参数 name 类型错误')
-	if (typeof generator !== 'function') throw new TypeError('参数 writer 类型错误')
-	this.fjs.set(name + '.fake.js', generator)
+        if (typeof name !== 'string' || !name) throw new TypeError('参数 name 类型错误')
+        if (typeof generator !== 'function') throw new TypeError('参数 writer 类型错误')
+        this.fjs.set(name + '.fake.js', generator)
     }
 
     fakeJavaScript(req, res) {
-	const target = req.params.target
-	if (!target) return res.status(400).end()
+        const target = req.params.target
+        if (!target) return res.status(400).end()
 
-	if (!this.fjs.has(target)) return res.send(`alert("Server Error: No such fjs generater.\\nIf you are our developer, please check index.html.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：没有找到fjs生成器。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
-	let generator = this.fjs.get(target)
-	res.type('.js')
+        if (!this.fjs.has(target)) return res.send(`alert("Server Error: No such fjs generater.\\nIf you are our developer, please check index.html.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：没有找到fjs生成器。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
+        let generator = this.fjs.get(target)
+        res.type('.js')
 
-	try {
-	    var ret = generator(this.core, req)
-	    if (typeof ret !== 'string') throw new TypeError('fjs 脚本返回值类型错误 必须是字符串')
-	} catch(err) {
-	    res.send(`alert("Server Error: Failed to generate fjs.\\nIf you are our developer, please check server logs.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：无法生成fjs。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
-	    return this.core.logger.error('fjs生成器执行出错：' + err)
-	}
-	res.send(ret)
+        try {
+            var ret = generator(this.core, req)
+            if (typeof ret !== 'string') throw new TypeError('fjs 脚本返回值类型错误 必须是字符串')
+        } catch(err) {
+            res.send(`alert("Server Error: Failed to generate fjs.\\nIf you are our developer, please check server logs.\\nIf you are just a user, please report this situation to our developers.\\nEmail: ${this.core.config.email}\\n服务器错误：无法生成fjs。\\n如果你是我们的开发者，请检查服务器日志。\\n如果你仅仅是一位用户，请将此情况报告给我们的开发者。\\n电子邮箱：${this.core.config.email}")`)
+            return this.core.logger.error('fjs生成器执行出错：' + err)
+        }
+        res.send(ret)
     }
 }
 

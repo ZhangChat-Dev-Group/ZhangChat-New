@@ -2,61 +2,30 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
-import * as UAC from '../utility/UAC/_info';
-
-// module support functions
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
-  }
-
-  let sanitizedText = text;
-
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
+import { verifyText } from "../utility/_StringTester";
+import { getUserDetails } from "../utility/UAC/_info";
 
 // module main
 export async function run(core, server, socket, data) {
   // check user input
-  const text = parseText(data.text);
-
-  if (!text) {
-    // lets not send objects or empty text, yea?
-    return server.police.frisk(socket.address, 13);
-  }
+  const text = verifyText(data.text);
 
   // check for spam
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      // 被娘化的服务器 致敬曾经的XChat
+      text: '# 你干嘛~ 哈哈哎哟~\n服务器娘经受不住你那富有激情的文字 要崩溃咯\n请稍等一会儿再聊',
     }, socket);
   }
 
   // build chat payload
   const payload = {
     cmd: 'chat',
-    nick: socket.nick,
+    ...getUserDetails(socket),
     text,
-    level: socket.level,
   };
-
-  if (UAC.isAdmin(socket.level)) {
-    payload.admin = true;
-  } else if (UAC.isModerator(socket.level)) {
-    payload.mod = true;
-  }
-
-  if (socket.trip) {
-    payload.trip = socket.trip;
-  }
 
   // broadcast to channel peers
   server.broadcast(payload, { channel: socket.channel });
@@ -69,26 +38,7 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
   server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
-}
-
-// checks for miscellaneous '/' based commands
-export function commandCheckIn(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/myhash')) {
-    server.reply({
-      cmd: 'info',
-      text: `Your hash: ${socket.hash}`,
-    }, socket);
-
-    return false;
-  }
-
-  return payload;
 }
 
 export function finalCmdCheck(core, server, socket, payload) {
@@ -100,28 +50,71 @@ export function finalCmdCheck(core, server, socket, payload) {
     return payload;
   }
 
+  if (payload.text.startsWith('/shrug')) {
+    payload.text = '¯\\\_(ツ)_/¯'
+    return payload
+  }
+
+  if (payload.text.startsWith('/command-code 75038')) {
+    let msgs = ['i啊—— 电力客车K1806司机啊——', 'w命令号码拐五洞三八', 'i石湖荡至松江间上行线 64K+520 到 64K+120', 'w# 降弓用刑！']
+    for (let m of msgs) {
+      if (m[0] === 'i') server.reply({
+        cmd: 'info',
+        text: m.slice(1)
+      }, socket)
+      else server.reply({
+        cmd: 'warn',
+        text: m.slice(1)
+      }, socket)
+    }
+
+    return false
+  } else if (payload.text.startsWith('/train-num D727')) {
+    socket.replyWarn('==内容仅供娱乐 请勿过度解读==\n~~反对直特换桶，还我原色大列！~~\n~~反对刷绿，还我红白蓝！~~\n~~反对抢钱，降低票价！~~\n~~反对高阻，提升速度！~~\n~~机破！D727机破！！！~~')
+    return false
+  }
+
   if (payload.text.startsWith('//')) {
     payload.text = payload.text.substr(1);
-
     return payload;
   }
 
-  server.reply({
-    cmd: 'warn',
-    text: `Unknown command: ${payload.text}`,
-  }, socket);
+  const cmd = payload.text.split(' ')[0].slice(1)
+  const command = core.commands.get(cmd)
+
+  if (!command) {
+    core.commands.handleFail(server, socket, { cmd })
+    return false
+  }
+
+  if (command.info.runByChat) {
+    if (Array.isArray(command.info.dataRules)) {
+      const data = core.commands.parseText(command.info.dataRules, payload.text)
+      core.commands.handleCommand(server, socket, data)
+    } else {
+      core.commands.handleCommand(server, socket, { cmd })
+    }
+  } else {
+    core.commands.handleFail(server, socket, { cmd })
+  }
 
   return false;
 }
 
 export const requiredData = ['text'];
 export const info = {
-  id: 'root.zhangsoft.zhangchat.chat',
+  id: 'root.hackchat.chat',
   name: 'chat',
-  description: 'Broadcasts passed `text` field to the calling users channel',
+  description: '在当前频道发送一条消息',
   usage: `
     API: { cmd: 'chat', text: '<text to send>' }
-    Text: Uuuuhm. Just kind type in that little box at the bottom and hit enter.\n
-    Bonus super secret hidden commands:
-    /myhash`,
+    车迷快乐命令：发送 \`/command-code 75038\`
+    车迷恼火命令：发送 \`/train-num D727\``,
+  dataRules: [{
+    name: 'text',
+    required: true,
+    verify: text => !!verifyText(text),
+    all: true,
+  }],
+  runByChat: false
 };

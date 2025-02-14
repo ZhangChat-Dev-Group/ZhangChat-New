@@ -47,11 +47,7 @@ var markdownOptions = {
 var md = new Remarkable('full', markdownOptions);
 
 // image handler
-var allowImages = false;
-var imgHostWhitelist = [
-    'i.imgur.com',
-    'imgur.com',
-];
+var allowImages = true;
 
 function getDomain(link) {
     var a = document.createElement('a');
@@ -60,7 +56,8 @@ function getDomain(link) {
 }
 
 function isWhiteListed(link) {
-    return imgHostWhitelist.indexOf(getDomain(link)) !== -1;
+    let a = window.imgHostWhitelist.includes(getDomain(link));
+    return a
 }
 
 md.renderer.rules.image = function (tokens, idx, options) {
@@ -106,7 +103,7 @@ md.use(remarkableKatex);
 function verifyLink(link) {
     var linkHref = Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(link.href));
     if (linkHref !== link.innerHTML) {
-        return confirm('Warning, please verify this is where you want to go: ' + linkHref);
+        return confirm('注意，你即将前往：\n是否继续？' + linkHref);
     }
 
     return true;
@@ -117,37 +114,41 @@ var verifyNickname = function (nick) {
 }
 
 var frontpage = [
-    "                            _           _         _       _   ",
-    "                           | |_ ___ ___| |_   ___| |_ ___| |_ ",
-    "                           |   |_ ||  _| '_| |  _|   |_ ||  _|",
-    "                           |_|_|__/|___|_,_|.|___|_|_|__/|_|  ",
-    "",
-    "",
-    "Welcome to hack.chat, a minimal, distraction-free chat application.",
-    "Channels are created, joined and shared with the url, create your own channel by changing the text after the question mark.",
-    "If you wanted your channel name to be 'your-channel': https://hack.chat/?your-channel",
-    "There are no channel lists, so a secret channel name can be used for private discussions.",
-    "",
-    "Here are some pre-made channels you can join:",
-    "?lounge ?meta",
-    "?math ?physics ?chemistry",
-    "?technology ?programming",
-    "?games ?banana",
-    "And here's a random one generated just for you: ?" + Math.random().toString(36).substr(2, 8),
-    "",
-    "Formatting:",
-    "Whitespace is preserved, so source code can be pasted verbatim.",
-    "Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
-    "For syntax highlight, wrap the code like: \\`\\`\\`<language> <the code>\\`\\`\\` where <language> is any known programming language.",
-    "",
-    "Current Github: https://github.com/hack-chat",
-    "Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
-    "",
-    "Bots, Android clients, desktop clients, browser extensions, docker images, programming libraries, server modules and more:",
-    "https://github.com/hack-chat/3rd-party-software-list",
-    "",
-    "Server and web client released under the WTFPL and MIT open source license.",
-    "No message history is retained on the hack.chat server."
+    "# 小张聊天室 2.0",
+    "---",
+    "事先声明：",
+    "这是新版小张聊天室，是基于原版 HackChat 项目重写的，并且加上了一些创新性设计。",
+    "相对于旧版小张聊天室，当前版本比较简陋，如有需要请转到 [旧版小张聊天室](https://chat.zhangsoft.link/)",
+    "**注意：新版聊天室不兼容旧版的身份验证机制，因此由同一个密码生成的识别码是不同的。这是由于我们采用了“密码加密”技术，客户端将发送经过 SHA256 加密后的密码，而不是明文密码，以确保服务器无法直接读取。**",
+    "---",
+    "欢迎来到小张聊天室，这是一个黑客风格的聊天室。",
+    "在这里，我们把“房间”称作“频道（channel）”。",
+    "公共频道： ?chat",
+    "您也可以自己创建频道，只需要按照这个格式打开网址即可： https://nchat.zhangsoft.link/?频道名称",
+    "这是为您准备的空频道： ?" + Math.random().toString(36).substr(2, 8),
+    "---",
+    "本聊天室暂不开发聊天记录功能，但也请遵守公序良俗、相关法律法规以及我们的规定。",
+    "本站绝不欢迎盲目自大、言论弱智、过度幼稚的人，尤其是互联网虚拟国",
+    "如果您对本聊天室不满意或认为受到不公平对待，则可以向管理员以及站长提供反馈或申诉",
+    "---",
+    "你知道本站的历史吗？旧版聊天室原本是[MelonFish](https://gitee.com/XChatFish)在2022年下旬委托[MrZhang365](https://zhangsoft.link/)开发的新版XChat。",
+    "但由于某些原因，它被改成了小张聊天室。",
+    "而2024年下旬，[MrZhang365](https://zhangsoft.link/)认为聊天室过于臃肿，便开始重写，于是便有了现在的网站",
+    "XChat和小张聊天室（旧版+新版）都基于 HackChat，HackChat的项目地址是：https://github.com/hack-chat/main",
+    "小张聊天室（旧版）的项目地址是：https://github.com/ZhangChat-Dev-Group/ZhangChat",
+    "小张聊天室 2.0 的项目地址是：https://github.com/ZhangChat-Dev-Group/ZhangChat-New",
+    "**我们正处于起步阶段，欢迎聪明的您来贡献代码哦**",
+    "---",
+    "本聊天室开发者：",
+    "[HackChat的开发者们](https://github.com/hack-chat) - 提供基础代码",
+    "[MrZhang365](https://zhangsoft.link/) - 汉化 + 翻新大部分代码 + 编写新API",
+    "---",
+    "友情链接：",
+    "[HackChat聊天室](https://hack.chat/)",
+    "[hack.chat++ 客户端](https://hc.thz.cool/)",
+    "[聊天室历史书](https://hcwiki.gitbook.io/history)",
+    "---",
+    "2025-02-13 [MrZhang365](https://zhangsoft.link/) 致",
 ].join("\n");
 
 function $(query) {
@@ -168,7 +169,8 @@ function localStorageSet(key, val) {
 
 var ws;
 var myNick = localStorageGet('my-nick') || '';
-var myChannel = window.location.search.replace(/^\?/, '');
+var password = localStorageGet('password') || ''
+var myChannel = decodeURIComponent(window.location.search.replace(/^\?/, ''));
 var lastSent = [""];
 var lastSentPos = 0;
 
@@ -183,13 +185,13 @@ function RequestNotifyPermission() {
         var notifyPromise = Notification.requestPermission();
         if (notifyPromise) {
             notifyPromise.then(function (result) {
-                console.log("Hack.Chat notification permission: " + result);
+                console.info("通知权限状态：" + result);
                 if (result === "granted") {
                     if (notifyPermissionExplained === 0) {
                         pushMessage({
                             cmd: "chat",
                             nick: "*",
-                            text: "Notifications permission granted.",
+                            text: "已获取弹窗通知权限",
                             time: null
                         });
                         notifyPermissionExplained = 1;
@@ -199,8 +201,8 @@ function RequestNotifyPermission() {
                     if (notifyPermissionExplained === 0) {
                         pushMessage({
                             cmd: "chat",
-                            nick: "*",
-                            text: "Notifications permission denied, you won't be notified if someone @mentions you.",
+                            nick: "!",
+                            text: "弹窗通知权限获取失败，当有人私信或@你时，你将不会收到通知",
                             time: null
                         });
                         notifyPermissionExplained = -1;
@@ -212,11 +214,11 @@ function RequestNotifyPermission() {
     } catch (error) {
         pushMessage({
             cmd: "chat",
-            nick: "*",
-            text: "Unable to create a notification.",
+            nick: "!",
+            text: "无法请求弹窗通知权限",
             time: null
         });
-        console.error("An error occured trying to request notification permissions. This browser might not support desktop notifications.\nDetails:")
+        console.error("无法请求通知权限，当前浏览器可能不支持，详细信息：")
         console.error(error)
         return false;
     }
@@ -265,7 +267,7 @@ if (notifySetting === "true" || notifySetting === true) {
 function spawnNotification(title, body) {
     // Let's check if the browser supports notifications
     if (!("Notification" in window)) {
-        console.error("This browser does not support desktop notification");
+        console.error("当前浏览器不支持通知API");
     } else if (Notification.permission === "granted") { // Check if notification permissions are already given
         // If it's okay let's create a notification
         var options = {
@@ -292,7 +294,7 @@ function spawnNotification(title, body) {
 function notify(args) {
     // Spawn notification if enabled
     if (notifySwitch.checked) {
-        spawnNotification("?" + myChannel + "  —  " + args.nick, args.text)
+        spawnNotification("?" + myChannel + "  —  @" + args.nick, args.text)
     }
 
     // Play sound if enabled
@@ -300,10 +302,20 @@ function notify(args) {
         var soundPromise = document.getElementById("notify-sound").play();
         if (soundPromise) {
             soundPromise.catch(function (error) {
-                console.error("Problem playing sound:\n" + error);
+                console.error("播放铃声失败：\n" + error);
             });
         }
     }
+}
+
+async function sha256(text) {
+    let encoder = new TextEncoder()
+    let data = encoder.encode(text)
+
+    let buffer = await crypto.subtle.digest('SHA-256', data)
+    let arr = Array.from(new Uint8Array(buffer))
+
+    return arr.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 function join(channel) {
@@ -323,13 +335,25 @@ function join(channel) {
 
     var wasConnected = false;
 
-    ws.onopen = function () {
+    ws.onopen = async function () {
         var shouldConnect = true;
         if (!wasConnected) {
             if (location.hash) {
                 myNick = location.hash.substr(1);
             } else {
-                var newNick = prompt('Nickname:', myNick);
+                let inputMsg = '请输入昵称\n'
+                if (password) inputMsg += '已有保存的密码，如需更改请按照 昵称#密码 的格式来输入'
+                else inputMsg += '请按照 昵称#密码 的格式填写以获取识别码'
+
+                let userInput = prompt(inputMsg, myNick);
+                if (!userInput) {
+                    shouldConnect = false
+                    return 
+                }
+                var newNick = userInput.split('#')[0]
+                if (userInput.split('#').slice(1).join('')) {
+                    password = await sha256(userInput.split('#').slice(1).join(''))
+                }
                 if (newNick !== null) {
                     myNick = newNick;
                 } else {
@@ -340,8 +364,9 @@ function join(channel) {
         }
 
         if (myNick && shouldConnect) {
-            localStorageSet('my-nick', myNick);
-            send({ cmd: 'join', channel: channel, nick: myNick });
+            localStorageSet('my-nick', newNick)
+            localStorageSet('password', password || '')
+            send({ cmd: 'join', channel: channel, nick: myNick, password, safeMode: true });
         }
 
         wasConnected = true;
@@ -349,7 +374,7 @@ function join(channel) {
 
     ws.onclose = function () {
         if (wasConnected) {
-            pushMessage({ nick: '!', text: "Server disconnected. Attempting to reconnect. . ." });
+            pushMessage({ nick: '!', text: "和服务器娘的连接被断开了，正在重新连接..." });
         }
 
         window.setTimeout(function () {
@@ -392,7 +417,7 @@ var COMMANDS = {
             userAdd(nick);
         });
 
-        pushMessage({ nick: '*', text: "Users online: " + nicks.join(", ") })
+        pushMessage({ nick: '*', text: "在线用户：" + nicks.join(", ") })
     },
 
     onlineAdd: function (args) {
@@ -401,7 +426,7 @@ var COMMANDS = {
         userAdd(nick);
 
         if ($('#joined-left').checked) {
-            pushMessage({ nick: '*', text: nick + " joined" });
+            pushMessage({ nick: '*', text: nick + " 加入了频道" });
         }
     },
 
@@ -411,7 +436,7 @@ var COMMANDS = {
         userRemove(nick);
 
         if ($('#joined-left').checked) {
-            pushMessage({ nick: '*', text: nick + " left" });
+            pushMessage({ nick: '*', text: nick + " 离开了频道" });
         }
     }
 }
@@ -437,10 +462,6 @@ function pushMessage(args) {
         messageEl.classList.add('warn');
     } else if (args.nick == '*') {
         messageEl.classList.add('info');
-    } else if (args.admin) {
-        messageEl.classList.add('admin');
-    } else if (args.mod) {
-        messageEl.classList.add('mod');
     }
 
     // Nickname
@@ -479,7 +500,7 @@ function pushMessage(args) {
     // Scroll to bottom
     var atBottom = isAtBottom();
     $('#messages').appendChild(messageEl);
-    if (atBottom) {
+    if (atBottom && !!myChannel) {
         window.scrollTo(0, document.body.scrollHeight);
     }
 
@@ -538,11 +559,11 @@ function updateTitle() {
     if (myChannel) {
         title = "?" + myChannel;
     } else {
-        title = "hack.chat";
+        title = "小张聊天室";
     }
 
     if (unread > 0) {
-        title = '(' + unread + ') ' + title;
+        title = '>' + unread + '< ' + title;
     }
 
     document.title = title;

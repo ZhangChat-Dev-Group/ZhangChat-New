@@ -2,68 +2,46 @@
   Description: Removes a target ip from the ratelimiter
 */
 
-import * as UAC from '../utility/UAC/_info';
+import { isIP } from 'net'
 
 // module main
 export async function run(core, server, socket, data) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
-    return server.police.frisk(socket.address, 10);
+  if (data.ip === '*') {
+    core.config.bannedIPs = []
+    server.broadcast({
+      cmd: 'info',
+      text: `${socket.nick}#${socket.trip} 解除了所有IP封禁`
+    }, { _group: 'root.zhangsoft.zhangchat.group.member' })
+  } else {
+    server.unban(data.ip)
+    server.broadcast({
+      cmd: 'info',
+      text: `${socket.nick}#${socket.trip} 解除了IP封禁：${data.ip}`
+    }, { _group: 'root.zhangsoft.zhangchat.group.member' })
   }
 
-  // check user input
-  if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
+  if (!core.configManager.save()) {
     return server.reply({
       cmd: 'warn',
-      text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      text: '无法保存配置文件 请联系站长检查日志',
     }, socket);
   }
-
-  // find target
-  let mode;
-  let target;
-  if (typeof data.ip === 'string') {
-    mode = 'ip';
-    target = data.ip;
-  } else {
-    mode = 'hash';
-    target = data.hash;
-  }
-
-  // remove arrest record
-  server.police.pardon(target);
-
-  // mask ip if used
-  if (mode === 'ip') {
-    target = server.getSocketHash(target);
-  }
-  console.log(`${socket.nick} [${socket.trip}] unbanned ${target} in ${socket.channel}`);
-
-  // reply with success
-  server.reply({
-    cmd: 'info',
-    text: `Unbanned ${target}`,
-  }, socket);
-
-  // notify mods
-  server.broadcast({
-    cmd: 'info',
-    text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
-  }, { level: UAC.isModerator });
-
-  // stats are fun
-  core.stats.decrement('users-banned');
-
-  return true;
 }
 
 export const approve = {
   groups: ['root.zhangsoft.zhangchat.group.mod']
 }
 export const info = {
-  id: 'root.zhangsoft.zhangchat.unban',
+  id: 'root.hackchat.unban',
   name: 'unban',
-  description: 'Removes target ip from the ratelimiter',
+  description: '解除封禁特定或者全部的IP地址',
   usage: `
-    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`,
+    发送 /unban <IP地址（如需解封所有IP 请填写\\*）>
+    API: { cmd: 'unban', ip: '<target ip>' }`,
+  runByChat: true,
+  dataRules: [{
+    name: 'ip',
+    required: true,
+    verify: ip => !!isIP(ip) || ip === '*'
+  }]
 };

@@ -66,6 +66,7 @@ class MainServer extends WsServer {
 
     this.setupServer();
     this.loadHooks();
+    this.loadFjs();
   }
 
   /**
@@ -134,6 +135,12 @@ class MainServer extends WsServer {
 
   isBanned(ip) { return this.core.config.bannedIPs.includes(ip) }
 
+  setupSocket(socket) {
+    socket.reply = payload => this.send(payload, socket)
+    socket.replyInfo = text => this.replyInfo(text, socket)
+    socket.replyWarn = text => this.replyWarn(text, socket)
+  }
+
   /**
     * Bind listeners for the new socket created on connection to this class
     * @param {ws#WebSocket} socket New socket object
@@ -146,6 +153,12 @@ class MainServer extends WsServer {
 
     newSocket.address = this.httpServer.getIp(request)
     newSocket.ip = newSocket.address
+    newSocket.id = Math.floor(Math.random() * 9999999999999)
+
+    // What? Doctor Who???
+    newSocket.exterminate = newSocket.terminate    // Dalek: Exterminate! Exterminate! Exterminate!!!
+
+    this.setupSocket(newSocket)
 
     newSocket.on('message', (data) => {
       this.handleData(socket, data);
@@ -319,6 +332,28 @@ class MainServer extends WsServer {
   }
 
   /**
+   * 向目标用户发送一个info提示
+   * @param {String} text 提示文本
+   * @param {ws#WebSocket} socket 目标用户
+   */
+  replyInfo(text, socket) {
+    this.send({
+      cmd: 'info', text
+    }, socket)
+  }
+
+  /**
+   * 向目标用户发送一个warn警告
+   * @param {String} text 警告文本
+   * @param {ws#WebSocket} socket 目标用户
+   */
+  replyWarn(text, socket) {
+    this.send({
+      cmd: 'warn', text
+    }, socket)
+  }
+
+  /**
     * Finds sockets/clients that meet the filter requirements, then passes the data to them
     * @param {Object} payload Object to convert to json for transmission
     * @param {Object} filter see `this.findSockets()`
@@ -453,6 +488,10 @@ class MainServer extends WsServer {
     return matches;
   }
 
+  findSocket(filter) {
+    return this.findSockets(filter)[0] || null
+  }
+
   /**
     * Hashes target socket's remote address using non-static variable length salt
     * encodes and shortens the output, returns that value
@@ -509,6 +548,11 @@ class MainServer extends WsServer {
         this.hooks.out.set(hookObj);
       }
     }
+  }
+
+  loadFjs() {
+    this.httpServer.clearFjs()
+    this.core.commands.initFakeJavaScript(this.httpServer)
   }
 
   /**

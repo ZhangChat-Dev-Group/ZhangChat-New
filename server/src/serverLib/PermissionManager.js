@@ -53,6 +53,7 @@ class PermissionManager {
     }
 
     inPermission(trip, permission) {
+        if (!trip) return false
         // if (!this.permissions.has(permission)) throw new Error('No such permission name')
         if (!this.permissions.has(permission)) return false
         if (!this.permissions.get(permission).includes(trip)) return false
@@ -67,6 +68,7 @@ class PermissionManager {
      * @returns {Boolean}
      */
     inPermissionGroup(trip, permissionGroup, ignoreGroup = '') {
+        if (!trip) return false
         // if (!this.permissionGroups.has(permissionGroup) throw new Error('No such permission group')
         if (!this.permissionGroups.has(permissionGroup)) return false
 
@@ -84,6 +86,7 @@ class PermissionManager {
     }
 
     hasPermission(trip, permission) {
+        if (!trip) return false
         if (this.inPermission(trip, permission)) return true
 
         for (let i of this.permissionGroups) {

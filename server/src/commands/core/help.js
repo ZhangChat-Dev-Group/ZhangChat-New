@@ -4,22 +4,9 @@
 
 // module main
 export async function run(core, server, socket, payload) {
-  // check for spam
-  if (server.police.frisk(socket.address, 2)) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
-    }, socket);
-  }
-
-  // verify user input
-  if (typeof payload.command !== 'undefined' && typeof payload.command !== 'string') {
-    return true;
-  }
-
   let reply = '';
   if (typeof payload.command === 'undefined') {
-    reply += '# All commands:\n|Category:|Name:|\n|---:|---|\n';
+    reply += '# 全部命令\n|分类|名称|\n|---:|---|\n';
 
     const categories = core.commands.categoriesList.sort();
     for (let i = 0, j = categories.length; i < j; i += 1) {
@@ -28,20 +15,20 @@ export async function run(core, server, socket, payload) {
       reply += `${catCommands.map((c) => `${c.info.name}`).join(', ')}|\n`;
     }
 
-    reply += '---\nFor specific help on certain commands, use either:\nText: `/help <command name>`\nAPI: `{cmd: \'help\', command: \'<command name>\'}`';
+    reply += '---\n若要获取指定命令的帮助，请使用：\n发送：`/help <命令名>`\nAPI：`{cmd: \'help\', command: \'<command name>\'}`';
   } else {
     const command = core.commands.get(payload.command);
 
     if (typeof command === 'undefined') {
-      reply += 'Unknown command';
+      reply += '找不到命令';
     } else {
-      reply += `# ${command.info.name} command:\n| | |\n|---:|---|\n`;
-      reply += `|**Name:**|${command.info.name}|\n`;
-      reply += `|**Aliases:**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}|\n`;
-      reply += `|**Category:**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
-      reply += `|**Required Parameters:**|${command.requiredData || 'None'}|\n`;
-      reply += `|**Description:**|${command.info.description || '¯\_(ツ)_/¯'}|\n\n`;
-      reply += `**Usage:** ${command.info.usage || command.info.name}`;
+      reply += `# ${command.info.name} 命令：\n| | |\n|---:|---|\n`;
+      reply += `|**名称：**|${command.info.name}|\n`;
+      reply += `|**别名：**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : '¯\\\_(ツ)_/¯'}|\n`;
+      reply += `|**分类：**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
+      reply += `|**必要参数：**|${command.info.dataRules.filter(r => r.required).map(r => r.name).join(', ') || '¯\\\_(ツ)_/¯'}|\n`;
+      reply += `|**说明：**|${command.info.description || '¯\\\_(ツ)_/¯'}|\n\n`;
+      reply += `**用法：** ${command.info.usage || command.info.name}`;
     }
   }
 
@@ -54,36 +41,18 @@ export async function run(core, server, socket, payload) {
   return true;
 }
 
-// module hook functions
-export function initHooks(server) {
-  server.registerHook('in', 'chat', this.helpCheck.bind(this), 28);
-}
-
-// hooks chat commands checking for /whisper
-export function helpCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/help')) {
-    const input = payload.text.substr(1).split(' ', 2);
-
-    this.run(core, server, socket, {
-      cmd: input[0],
-      command: input[1],
-    });
-
-    return false;
-  }
-
-  return payload;
-}
-
 export const info = {
-  id: 'root.zhangsoft.zhangchat.help',
+  id: 'root.hackchat.help',
+  rateLimit: 3,
   name: 'help',
+  aliases: ['h', '?'],
   description: 'Outputs information about the servers current protocol',
   usage: `
     API: { cmd: 'help', command: '<optional command name>' }
-    Text: /help <optional command name>`,
+    发送 /help <命令名称（可不填）>`,
+  runByChat: true,
+  dataRules: [{
+    name: 'command',
+    required: false
+  }]
 };

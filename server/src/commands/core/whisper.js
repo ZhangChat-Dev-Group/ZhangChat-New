@@ -2,152 +2,67 @@
   Description: Display text on targets screen that only they can see
 */
 
-import * as UAC from '../utility/UAC/_info';
-
-// module support functions
-
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
-  }
-
-  let sanitizedText = text;
-
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
+import { verifyNick, verifyText } from "../utility/_StringTester";
 
 // module main
 export async function run(core, server, socket, payload) {
   // check user input
-  const text = parseText(payload.text);
+  const text = verifyNick(payload.text);
 
-  if (!text) {
-    // lets not send objects or empty text, yea?
-    return server.police.frisk(socket.address, 13);
-  }
-
-  // check for spam
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      text: '# 你干嘛~ 哈哈哎哟~\n服务器娘经受不住你那富有激情的文字 要崩溃咯\n请稍等一会儿再聊',
     }, socket);
   }
 
-  const targetNick = payload.nick;
-  if (!UAC.verifyNickname(targetNick)) {
-    return true;
-  }
-
-  // find target user
-  let targetClient = server.findSockets({ channel: socket.channel, nick: targetNick });
-
-  if (targetClient.length === 0) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Could not find user in channel',
-    }, socket);
-  }
-
-  [targetClient] = targetClient;
+  let target = server.findSocket({
+    channel: socket.channel,
+    nick: payload.nick,
+  })
+  if (!target) return server.reply({
+    cmd: 'warn',
+    text: `找不到名为 ${payload.nick} 的用户`
+  }, socket)
 
   server.reply({
     cmd: 'info',
     type: 'whisper',
     from: socket.nick,
-    trip: socket.trip || 'null',
-    text: `${socket.nick} whispered: ${text}`,
-  }, targetClient);
-
-  targetClient.whisperReply = socket.nick;
-
+    msg: text,
+    text: `${socket.nick} 给你发了私信：${text}`
+  }, target)
   server.reply({
     cmd: 'info',
-    type: 'whisper',
-    text: `You whispered to @${targetNick}: ${text}`,
-  }, socket);
+    text: `你给 ${target.nick} 发送了私信：${text}`
+  }, socket)
 
-  return true;
+  target.replyNick = socket.nick
 }
 
-// module hook functions
-export function initHooks(server) {
-  server.registerHook('in', 'chat', this.whisperCheck.bind(this), 20);
-}
-
-// hooks chat commands checking for /whisper
-export function whisperCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/whisper') || payload.text.startsWith('/w ')) {
-    const input = payload.text.split(' ');
-
-    // If there is no nickname target parameter
-    if (input[1] === undefined) {
-      server.reply({
-        cmd: 'warn',
-        text: 'Refer to `/help whisper` for instructions on how to use this command.',
-      }, socket);
-
-      return false;
-    }
-
-    const target = input[1].replace(/@/g, '');
-    input.splice(0, 2);
-    const whisperText = input.join(' ');
-
-    this.run(core, server, socket, {
-      cmd: 'whisper',
-      nick: target,
-      text: whisperText,
-    });
-
-    return false;
-  }
-
-  if (payload.text.startsWith('/r ')) {
-    if (typeof socket.whisperReply === 'undefined') {
-      server.reply({
-        cmd: 'warn',
-        text: 'Cannot reply to nobody',
-      }, socket);
-
-      return false;
-    }
-
-    const input = payload.text.split(' ');
-    input.splice(0, 1);
-    const whisperText = input.join(' ');
-
-    this.run(core, server, socket, {
-      cmd: 'whisper',
-      nick: socket.whisperReply,
-      text: whisperText,
-    });
-
-    return false;
-  }
-
-  return payload;
-}
-
-export const requiredData = ['nick', 'text'];
 export const info = {
-  id: 'root.zhangsoft.zhangchat.whisper',
+  id: 'root.hackchat.whisper',
   name: 'whisper',
-  description: 'Display text on targets screen that only they can see',
+  description: '向一个目标用户发送私信',
+  aliases: ['w'],
   usage: `
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
-    Text: /whisper <target name> <text to whisper>
-    Text: /w <target name> <text to whisper>
-    Alt Text: /r <text to whisper, this will auto reply to the last person who whispered to you>`,
+    发送 /whisper <目标用户> <信息>
+    发送 /w <目标用户> <信息>
+    附加：发送 /r <信息> 即可快速回复上一位私信你的人`,
+  runByChat: true,
+  dataRules: [
+    {
+      name: 'nick',
+      required: true,
+      verify: verifyNick
+    },
+    {
+      name: 'text',
+      required: true,
+      verify: text => !!verifyText(text),
+      all: true
+    }
+  ]
 };

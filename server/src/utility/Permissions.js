@@ -7,6 +7,7 @@ exports.init = permissionManager => {
     // But you **MUST** obey our LICENSE 
     const prefix = 'root.zhangsoft.zhangchat.group.'
 	
+    if (!permissionManager.permissionGroups.has(prefix + 'member')) permissionManager.registerPermissionGroup(prefix + 'member', [], [ prefix + 'admin', prefix + 'mod' ])
     if (!permissionManager.permissionGroups.has(prefix + 'mod')) permissionManager.registerPermissionGroup(prefix + 'mod', [], [ prefix + 'admin' ])
     if (!permissionManager.permissionGroups.has(prefix + 'admin')) permissionManager.registerPermissionGroup(prefix + 'admin')
 

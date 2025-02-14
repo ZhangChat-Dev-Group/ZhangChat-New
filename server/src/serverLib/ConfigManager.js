@@ -77,11 +77,11 @@ class ConfigManager {
         spaces: 2,
       });
       removeSync(backupPath);
-      this.core.logger.info(`已保存配置文件`)
+      if (this.core) this.core.logger.info(`已保存配置文件`)
 
       return true;
     } catch (err) {
-      this.core.logger.error(`无法保存配置文件：${err}`);
+      if (this.core) this.core.logger.error(`无法保存配置文件：${err}`);
 
       return false;
     }

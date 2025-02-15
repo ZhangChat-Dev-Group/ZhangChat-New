@@ -24,7 +24,7 @@ class HttpServer extends Server {
         let useXff = false
         let ipHeader = this.core.config.ipHeader
 
-        if (!!ipHeader && req.headers[ipHeader].trim()) useXff = true
+        if (!!ipHeader && req.headers[ipHeader]) useXff = true
 
         let ip = ''
         if (useXff) {

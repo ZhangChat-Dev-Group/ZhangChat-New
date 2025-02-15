@@ -154,6 +154,7 @@ class MainServer extends WsServer {
     newSocket.address = this.httpServer.getIp(request)
     newSocket.ip = newSocket.address
     newSocket.id = Math.floor(Math.random() * 9999999999999)
+    newSocket.headers = request.headers
 
     // What? Doctor Who???
     newSocket.exterminate = newSocket.terminate    // Dalek: Exterminate! Exterminate! Exterminate!!!

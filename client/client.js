@@ -110,7 +110,7 @@ function verifyLink(link) {
 }
 
 var verifyNickname = function (nick) {
-    return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+    return /^[\u4e00-\u9fa5_a-zA-Z0-9]{1,24}$/.test(nick);
 }
 
 var frontpage = [
@@ -319,10 +319,7 @@ async function sha256(text) {
 }
 
 function join(channel) {
-    if (document.domain == 'hack.chat') {
-        // For https://hack.chat/
-        ws = new WebSocket('wss://hack.chat/chat-ws');
-    } else {
+    if (!window.wsAddr) {
         // for local installs
         var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
         // if you changed the port during the server config, change 'wsPath'
@@ -331,6 +328,8 @@ function join(channel) {
         // (example: '/chat-ws')
         var wsPath = ':4000/websocket';
         ws = new WebSocket(protocol + '//' + document.domain + wsPath);
+    } else {
+        ws = new WebSocket(window.wsAddr)
     }
 
     var wasConnected = false;

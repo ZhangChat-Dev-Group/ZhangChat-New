@@ -22,7 +22,7 @@ class HttpServer extends Server {
 
     getIp(req) {
         let useXff = false
-        let ipHeader = this.core.config.ipHeader
+        let ipHeader = this.core.config.ipHeader.toLowerCase()
 
         if (!!ipHeader && req.headers[ipHeader]) useXff = true
 

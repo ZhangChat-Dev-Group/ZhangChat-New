@@ -22,11 +22,13 @@ class HttpServer extends Server {
 
     getIp(req) {
         let useXff = false
-        if (this.core.config.enableXff && req.headers['x-forwarded-for'].trim()) useXff = true
+        let ipHeader = this.core.config.ipHeader
+
+        if (!!ipHeader && req.headers[ipHeader].trim()) useXff = true
 
         let ip = ''
         if (useXff) {
-            let ips = req.headers['x-forwarded-for'].trim().split(',')
+            let ips = req.headers[ipHeader].trim().split(',')
             ip = ips[0]
         } else ip = req.socket.remoteAddress
         

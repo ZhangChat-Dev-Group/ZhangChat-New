@@ -35,8 +35,13 @@ const Questions = {
       message: '你必须输入密码',
       before: (value) => {
         const crypto = require('crypto');
+        
+        let sha256 = crypto.createHash('sha256')
+        sha256.update(value)
+        const password = sha256.digest('hex')
+
         const sha = crypto.createHash('sha256');
-        sha.update(value + salt);
+        sha.update(password + salt);
         return sha.digest('base64').substr(0, 6);
       },
     },
@@ -48,11 +53,15 @@ const Questions = {
       default: '3000',
     },
 
-    enableXff: {
-      type: 'boolean',
-      message: '你只能输入 true 或 false',
-      description: '是否使用反向代理',
-      default: false,
+    ipHeader: {
+      type: 'string',
+      message: '请输入请求头，留空则直接获取IP',
+      description: '从哪个请求头获取IP？（留空则为直接获取）',
+      default: '',
+      before: value => {
+        if (!value) return ''
+        return value.toLowerCase()
+      }
     }
   },
 };

@@ -21,6 +21,6 @@ console.log(stripIndents`
   -  ${chalk.magenta('   电子邮箱')}，用于向用户展示的邮箱地址
   -  ${chalk.magenta('   站长密码')}，使用该密码登录即可取得所有权限
   -  ${chalk.magenta('       端口')}，服务器端口
-  -  ${chalk.magenta('    启用XFF')}，是否从XFF请求头获取IP
+  -  ${chalk.magenta('  获取IP方式')}，是否从XFF请求头获取IP
   \u200b
 `);

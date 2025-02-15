@@ -503,7 +503,7 @@ function pushMessage(args) {
         window.scrollTo(0, document.body.scrollHeight);
     }
 
-    unread += 1;
+    if (myChannel) unread += 1;
     updateTitle();
 }
 

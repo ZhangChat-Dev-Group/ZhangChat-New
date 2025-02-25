@@ -60,6 +60,8 @@ export async function run(core, server, socket, data) {
 
   if (userInfo.safeWarning) return socket.replyWarn(`# 安全提醒：\n为保证用户数据安全，本站已启用安全模式，即客户端向服务器发送SHA256加密后的密码而不是明文密码\n我们检测到您的客户端不支持安全模式，因此帮您额外加密了密码\n请您向该客户端的开发者报告此问题，感谢您的理解与支持`,
     socket)
+  
+  if (socket.channel) return socket.replyWarn('你已经加入了一个频道，不得重复加入')
 
   if (server.findSocket({
     channel: data.channel,

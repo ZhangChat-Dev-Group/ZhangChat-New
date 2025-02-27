@@ -10,12 +10,12 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} 添加管理员：${data.trip}`
-  }, { _group: 'root.zhangsoft.zhangchat.group.mod' })
+  }, { _group: 'root.zhangsoft.zhangchat.group.member' })
   core.permissions.save(true)
 }
 
 export const approve = {
-  groups: ['root.hackchat.mods.add']
+  groups: ['root.zhangsoft.zhangchat.group.admin']
 }
 export const info = {
   id: 'root.zhangsoft.zhangchat.mods.add',

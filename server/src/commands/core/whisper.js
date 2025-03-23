@@ -7,7 +7,7 @@ import { verifyNick, verifyText } from "../utility/_StringTester";
 // module main
 export async function run(core, server, socket, payload) {
   // check user input
-  const text = verifyNick(payload.text);
+  const text = verifyText(payload.text);
 
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {

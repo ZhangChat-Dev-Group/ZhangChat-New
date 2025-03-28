@@ -17,12 +17,14 @@ class ImportsManager {
     * Create an `ImportsManager` instance for (re)loading classes and config
     * @param {String} basePath executing directory name; default __dirname
     */
-  constructor(basePath) {
+  constructor(basePath, core) {
     /**
       * Stored reference to the base directory path
       * @type {String}
       */
     this.basePath = basePath;
+
+    this.core = core
 
     /**
       * Data holder for imported modules

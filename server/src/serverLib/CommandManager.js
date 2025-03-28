@@ -431,7 +431,7 @@ class CommandManager {
     try {
       await command.run(this.core, server, socket, data);
     } catch (err) {
-      const errText = `# : (\n# 非常无语，我们出错了\n## 由于未知原因，我们无法执行 ${command.info.name} 命令\n小张聊天室 2.0 技术尚不成熟，尽管我们竭尽全力地写代码，但出错仍然是在所难免的\n我们恳请您将此错误报告给开发人员，以便于为您提供最好的体验\n联系方式： ${this.core.config.email}`;
+      const errText = `# : (\n# 非常无语，我们出错了\n## 由于未知原因，我们无法执行 ${command.info.name} 命令\n小张聊天室 2.0 技术尚不成熟，尽管我们竭尽全力地写代码，但出错仍然是在所难免的\n我们恳请您将此错误报告给开发人员，以便于为您提供最好的体验\n联系方式： ${this.core.config.email}\n`;
 
       // If we have more detail enabled, then we get the trace
       // if it isn't, or the property doesn't exist, then we'll get only the message

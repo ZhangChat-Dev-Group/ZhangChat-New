@@ -24,10 +24,10 @@ export async function run(core, server, socket, payload) {
     } else {
       reply += `# ${command.info.name} 命令：\n| | |\n|---:|---|\n`;
       reply += `|**名称：**|${command.info.name}|\n`;
-      reply += `|**别名：**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : '¯\\\_(ツ)_/¯'}|\n`;
+      reply += `|**别名：**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : '¯\\\\\_(ツ)\_/¯'}|\n`;
       reply += `|**分类：**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
-      reply += `|**必要参数：**|${command.info.dataRules.filter(r => r.required).map(r => r.name).join(', ') || '¯\\\_(ツ)_/¯'}|\n`;
-      reply += `|**说明：**|${command.info.description || '¯\\\_(ツ)_/¯'}|\n\n`;
+      reply += `|**必要参数：**|${(command.info.dataRules || []).filter(r => r.required).map(r => r.name).join(', ') || '¯\\\\\_(ツ)\\_/¯'}|\n`;
+      reply += `|**说明：**|${command.info.description || '¯\\\\\_(ツ)\_/¯'}|\n\n`;
       reply += `**用法：** ${command.info.usage || command.info.name}`;
     }
   }

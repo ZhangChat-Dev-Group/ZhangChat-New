@@ -72,7 +72,7 @@ class CoreApp {
     * @return {void}
     */
   buildImportManager() {
-    this.dynamicImports = new ImportsManager(join(__dirname, '../..'));
+    this.dynamicImports = new ImportsManager(join(__dirname, '../..'), this);
   }
 
   /**
